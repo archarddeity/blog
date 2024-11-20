@@ -17,11 +17,12 @@
       padding: 0;
       box-sizing: border-box;
       user-select: none;
-      color: #000;
+      color: #FFF;
+      font-weight: bold;
     }
     
     body {
-        background: linear-gradient(135deg, #f8b195, #f67280, #c06c84, #6c5b7b, #355c7d);
+        background: #000;
         background-size: 400% 400%;
         animation: gradientBG 10s infinite;
         font-family: 'Press Start 2P';
@@ -51,8 +52,6 @@
     .message {
       font-size: 1.5rem;
       line-height: 2rem;
-      text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff, 0 0 20px #ff6f91, 
-                   0 0 30px #ff6f91, 0 0 40px #ff6f91, 0 0 50px #ff6f91;
       animation: glow 1.5s infinite alternate;
       user-select: none;
       width: 100%;
@@ -74,19 +73,6 @@
 
     iframe {
       pointer-events: none; 
-    }
-    
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    
-    @keyframes glow {
-      from { text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff, 0 0 20px #ff6f91, 
-                   0 0 30px #ff6f91, 0 0 40px #ff6f91, 0 0 50px #ff6f91; }
-      to { text-shadow: 0 0 5px #ffffff, 0 0 15px #ff85a1, 0 0 30px #ff85a1, 
-                   0 0 45px #ff85a1, 0 0 60px #ff85a1, 0 0 75px #ff85a1; }
     }
 
     @media (max-width: 768px) {
