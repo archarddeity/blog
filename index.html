@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archard Deity | Blog</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="manifest" href="sitesite.webmanifest">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      color: #000;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #f8b195, #f67280, #c06c84, #6c5b7b, #355c7d);
+        background-size: 400% 400%;
+        animation: gradientBG 10s infinite;
+        font-family: 'Press Start 2P';
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        overflow: scroll;
+    }
+
+    p {
+        text-align: justify;
+        line-height: 2;
+    }
+
+    .wrapper {
+        display: flex;
+        text-align: center;
+        flex-direction: column;
+        gap: 50px;
+        width: 1200px;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .message {
+      font-size: 1.5rem;
+      line-height: 2rem;
+      text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff, 0 0 20px #ff6f91, 
+                   0 0 30px #ff6f91, 0 0 40px #ff6f91, 0 0 50px #ff6f91;
+      animation: glow 1.5s infinite alternate;
+      user-select: none;
+      width: 100%;
+    }
+
+    .message h1 {
+        margin-bottom: 20px;
+    }
+    
+    .message > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .message > hr {
+        width: 100%;
+        margin: 10px 0 20px;
+    }
+
+    iframe {
+      pointer-events: none; 
+    }
+    
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff, 0 0 20px #ff6f91, 
+                   0 0 30px #ff6f91, 0 0 40px #ff6f91, 0 0 50px #ff6f91; }
+      to { text-shadow: 0 0 5px #ffffff, 0 0 15px #ff85a1, 0 0 30px #ff85a1, 
+                   0 0 45px #ff85a1, 0 0 60px #ff85a1, 0 0 75px #ff85a1; }
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+            font-size: 14px;
+            overflow-x: hidden;
+        }
+
+        .wrapper {
+            width: 100%;
+            gap: 20px;
+        }
+
+        .message {
+            font-size: 1rem;
+            line-height: 1.5rem;
+            padding: 0 10px;
+        }
+
+        .message h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .message p {
+            text-align: justify;
+            font-size: 0.9rem;
+        }
+
+        iframe {
+            width: 100%;
+            height: auto;
+        }
+    }
+    
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <iframe src="https://giphy.com/embed/PW1W1ccjZTeta" width="453" height="480" style="" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+
+        <div class="message">
+            <div>
+                <h1>Welcome the "thing"</h1>
+                <span>November 21, 2024</span>
+                <span>12:48</span>
+            </div>
+            <hr>
+            <p>
+                "Most of the time, I spent too much time procrastinating and because of that, I always have the urge to post something, whenever I thought about something sad and I can't contain it, chances are, I am gonna post it on my YouTube Community or just sleep to forget it. So, since I don't want to get rid of those post and give my audience a bad impression about me, I decided to make a single page website where a page is dedicated to my thoughts and so on. I'll be more active in here, by blogging my thoughts, experiences, hobbies, questions and so on. By the way, how are you? M-me!? Uh.. I am doing well, I am just watching all of my favorite animes back in the days (not that I'm old thought), but yeah. As of now, I am watching K/ON at Hianime.to! I highly recommend it! Alrighty, time to continue watching again! Wait.. It's already late? Uh.. Should I sleep? Or should I sacrifice sleep? Hmmm.. Oh well. What is sleep anyways?"
+            </p>        
+        </div>
+    </div>
+</body>
+
+</html>
