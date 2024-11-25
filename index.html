@@ -145,11 +145,22 @@
                 <i>Listening to music..</i>
                 <br><br>
                 <b>MUSIC:</b><br>
-                <a href="https://www.youtube.com/watch?v=aYsgsSo1aow" target="_blank">🎧 🎧 🎧 🎧 🎧</a>
+                <a href="https://www.youtube.com/watch?v=aYsgsSo1aow" target="_blank" 
+                onclick="openYouTubeApp(event)">🎧 🎧 🎧 🎧 🎧</a>
                 <br><br>
             </p>
         </div>
     </div>
+
+    <script>
+        function openYouTubeApp(event) {
+            if (navigator.userAgent.match(/Android|iPhone|iPad|iPod/i)) {
+                // Try to open in YouTube app
+                event.preventDefault();
+                window.location.href = "youtube://www.youtube.com/watch?v=aYsgsSo1aow";
+            }
+        }
+    </script>
 </body>
 
 </html>
