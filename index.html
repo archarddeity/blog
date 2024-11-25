@@ -145,19 +145,33 @@
                 <i>Listening to music..</i>
                 <br><br>
                 <b>MUSIC:</b><br>
-                <a href="https://www.youtube.com/watch?v=aYsgsSo1aow" target="_blank" 
-                onclick="openYouTubeApp(event)">🎧 🎧 🎧 🎧 🎧</a>
+                <a href="https://www.youtube.com/watch?v=aYsgsSo1aow" 
+                   onclick="redirectToYouTube(event)">🎧 🎧 🎧 🎧 🎧</a>
                 <br><br>
             </p>
         </div>
     </div>
 
     <script>
-        function openYouTubeApp(event) {
+        function redirectToYouTube(event) {
+            // Check if on mobile
             if (navigator.userAgent.match(/Android|iPhone|iPad|iPod/i)) {
-                // Try to open in YouTube app
                 event.preventDefault();
-                window.location.href = "youtube://www.youtube.com/watch?v=aYsgsSo1aow";
+
+                const videoId = "aYsgsSo1aow";
+
+                if (navigator.userAgent.match(/Android/i)) {
+                    // Use intent for Android
+                    window.location.href = `intent://www.youtube.com/watch?v=${videoId}#Intent;package=com.google.android.youtube;end;`;
+                } else if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+                    // Use youtube:// scheme for iOS
+                    window.location.href = `youtube://www.youtube.com/watch?v=${videoId}`;
+                }
+
+                // Backup: Open regular YouTube link after 1 second (in case app fails to open)
+                setTimeout(() => {
+                    window.location.href = `https://www.youtube.com/watch?v=${videoId}`;
+                }, 1000);
             }
         }
     </script>
