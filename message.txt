@@ -1,6 +1,5 @@
-!cmt This is a comment line
-*- One Line Title -*
-!cmt- This comment won't show -!
+!!comment This is a comment line
+!!title One Line Title
 Some text below.
 
-!pic https://cdn.britannica.com/39/226539-050-D21D7721/Portrait-of-a-cat-with-whiskers-visible.jpg
+!!image https://cdn.britannica.com/39/226539-050-D21D7721/Portrait-of-a-cat-with-whiskers-visible.jpg
