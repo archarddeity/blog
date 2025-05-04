@@ -1,10 +1,14 @@
 name: Build and Deploy Retro Blog
 
 on:
+  schedule:
+    - cron: "0 * * * *"  # Every hour
   push:
     paths:
       - "message.txt"
       - "template.html"
+      - "channel.txt"
+      - "fetch_posts.py"
 
 jobs:
   build:
@@ -15,37 +19,33 @@ jobs:
       id-token: write
 
     steps:
-      # Checkout repo - Only necessary to get the latest template.html
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
-      # Install dependencies from requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install yt-dlp pytz
 
-      # Run build script
+      - name: Fetch YouTube Community Posts
+        run: python fetch_posts.py
+
       - name: Run build script
-        run: |
-          python build.py
+        run: python build.py
 
-      # Commit and push changes
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add index.html
-          git commit -m "Auto: Update index.html from message.txt" || echo "No changes to commit"
+          git commit -m "Auto: Update index.html from latest YouTube posts" || echo "No changes to commit"
           git push
 
-      # Upload site files as artifact
       - name: Upload site files as artifact (v4)
         uses: actions/upload-artifact@v4
         with:
@@ -53,7 +53,7 @@ jobs:
           path: |
             index.html
             style.css  # Add other needed files here
-  
+
   deploy:
     needs: build
     runs-on: ubuntu-latest

@@ -1,5 +1,5 @@
 import re
-import pytz
+import pytz # type: ignore
 from datetime import datetime
 
 # Specify the timezone you want, or pass this dynamically (e.g., from environment)
