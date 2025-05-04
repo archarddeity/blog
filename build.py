@@ -20,19 +20,19 @@ for line in lines:
         content_lines.append("")  # Preserve paragraph breaks
         continue
 
-    # Ignore comment lines
+    # Handle comment lines (Change !cmt to !!comment)
     if line.startswith("!cmt"):
+        line = re.sub(r"^!cmt", "!!comment", line)
+        content_lines.append(f'<div class="comment">{line[7:].strip()}</div>')  # Add comment wrapper
         continue
 
-    # Ignore inline comments
-    line = re.sub(r"!cmt-.*?-!", "", line)
-
-    # Handle titles
+    # Handle title lines (Change *- ... -* to !!title)
     if re.match(r"\*-.+?-\*", line):
-        titles.append(line)
+        title = re.sub(r"^\*-(.+?)-\*$", r"!!title \1 !!", line)  # Format as !!title <title> !!
+        titles.append(title)
         continue
 
-    # Handle images
+    # Handle images (Change !pic to !!image)
     if line.startswith("!pic "):
         link = line[5:].strip()
         content_lines.append(f'<div class="post-image"><img src="{link}" alt="Image" /></div>')
@@ -47,7 +47,7 @@ html_content = "<br><br>".join(content_lines).replace("\n", " ")
 if len(titles) > 1:
     title_text = "Too Much Title"
 elif titles:
-    title_text = re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
+    title_text = re.sub(r"^!!title (.+?) !!", r"\1", titles[0])  # Extract title text
 else:
     title_text = "My Retro Adventure"
 
