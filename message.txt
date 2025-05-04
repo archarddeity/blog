@@ -1,6 +1,5 @@
 !cmt This is a comment line
 *- One Line Title -*
-*- Another Title -*
 !cmt- This comment won't show -!
 Some text below.
 

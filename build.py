@@ -1,5 +1,9 @@
 import re
+import pytz
 from datetime import datetime
+
+# Specify the timezone you want, or pass this dynamically (e.g., from environment)
+user_timezone = pytz.timezone("America/New_York")  # Replace with user's time zone
 
 # Read message.txt
 with open("message.txt", "r", encoding="utf-8") as f:
@@ -13,7 +17,7 @@ for line in lines:
     line = line.strip()
 
     if not line:
-        content_lines.append("")  # preserve paragraph breaks
+        content_lines.append("")  # Preserve paragraph breaks
         continue
 
     # Ignore comment lines
@@ -47,9 +51,10 @@ elif titles:
 else:
     title_text = "My Retro Adventure"
 
-# Format date and time
-now = datetime.now()
-formatted_datetime = now.strftime("%B %d, %Y — %I:%M %p")
+# Get current time in UTC and convert to user time zone
+now_utc = datetime.now(pytz.utc)  # Get current UTC time
+user_time = now_utc.astimezone(user_timezone)  # Convert to user's time zone
+formatted_datetime = user_time.strftime("%B %d, %Y — %I:%M %p")
 
 # Read template
 with open("template.html", "r", encoding="utf-8") as f:
