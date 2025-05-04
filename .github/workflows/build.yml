@@ -35,10 +35,13 @@ jobs:
           git commit -m "Auto: Update index.html from message.txt" || echo "No changes to commit"
           git push
 
-      - name: Upload site to GitHub Pages
-        uses: actions/upload-pages-artifact@v2
+      - name: Upload site files as artifact (v4)
+        uses: actions/upload-artifact@v4
         with:
-          path: .  # Include only the files needed for Pages (e.g., index.html, style.css)
+          name: github-pages
+          path: |
+            index.html
+            style.css  # add other needed files here
 
   deploy:
     needs: build
