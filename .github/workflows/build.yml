@@ -35,10 +35,14 @@ jobs:
           git commit -m "Auto: Update index.html from message.txt" || echo "No changes to commit"
           git push
 
+      # Explicitly include this to avoid 'missing download info' error
+      - name: Set up Upload Artifact Action
+        uses: actions/upload-artifact@v3
+
       - name: Upload site to GitHub Pages
         uses: actions/upload-pages-artifact@v2
         with:
-          path: .  # Use "." if index.html and style.css are in the repo root
+          path: .  # Adjust if needed
 
   deploy:
     needs: build
