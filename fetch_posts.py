@@ -5,31 +5,14 @@ from datetime import datetime
 
 user_timezone = pytz.timezone("America/New_York")
 
-# Load usernames from channel.txt
 with open("channel.txt", "r", encoding="utf-8") as f:
-    usernames = [line.strip() for line in f if line.strip()]
+    channel_ids = [line.strip() for line in f if line.strip()]
 
 output_lines = []
 
-for username in usernames:
+for channel_id in channel_ids:
     try:
-        # Step 1: Resolve username to channel ID
-        print(f"🔍 Resolving @{username} to channel ID...")
-        result = subprocess.run(
-            ["yt-dlp", "--skip-download", "--dump-json", f"https://www.youtube.com/@{username}"],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-
-        data = json.loads(result.stdout)
-        channel_url = data.get("channel_url")
-        if not channel_url:
-            output_lines.append(f"@{username}:\n⚠️ Could not resolve channel URL.\n")
-            continue
-
-        # Step 2: Use channel ID URL to fetch community post
-        community_url = f"{channel_url}/community"
+        community_url = f"https://www.youtube.com/channel/{channel_id}/community"
         print(f"📥 Fetching community post from {community_url}...")
 
         result = subprocess.run(
@@ -38,6 +21,9 @@ for username in usernames:
             text=True,
             timeout=30
         )
+
+        if not result.stdout.strip():
+            raise ValueError("Empty response")
 
         for line in result.stdout.splitlines():
             post_data = json.loads(line)
@@ -52,15 +38,15 @@ for username in usernames:
                 else:
                     formatted_time = "Unknown time"
 
-                output_lines.append(f"@{username}:\n{text}\nPosted: {formatted_time}\n")
+                output_lines.append(f"{channel_id}:\n{text}\nPosted: {formatted_time}\n")
                 break
         else:
-            output_lines.append(f"@{username}:\n⚠️ No community post found.\n")
+            output_lines.append(f"{channel_id}:\n⚠️ No community post found.\n")
 
     except Exception as e:
-        output_lines.append(f"@{username}:\n❌ Error: {str(e)}\n")
+        output_lines.append(f"{channel_id}:\n❌ Error: {str(e)}\n")
 
-# Write output to message.txt
+# Save results
 with open("message.txt", "w", encoding="utf-8") as f:
     f.write("\n====\n\n".join(output_lines))
 
