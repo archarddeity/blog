@@ -1,7 +1,8 @@
-!cmt This is a comment line
-*- One Line Title -*
-!cmt- This comment won't show -!
-Some text below.
+!cmt Title
+*- Rekindle -*
 
-!pic https://cdn.britannica.com/39/226539-050-D21D7721/Portrait-of-a-cat-with-whiskers-visible.jpg
-!pic https://cdn.britannica.com/39/226539-050-D21D7721/Portrait-of-a-cat-with-whiskers-visible.jpg
+!cmt- Text
+Hello, this is Archard Deity. Currently, I'm on the process of making something I've never done before.
+
+!cmt - Image
+!pic https://tenor.com/view/oreki-hyouka-gif-19836764
