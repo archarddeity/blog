@@ -1,39 +1,8 @@
 body {
-  background-color: #000;
-  color: #0f0;
-  font-family: 'Press Start 2P', monospace;
-  padding: 20px;
+    padding: 2rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
-.post-container {
-  border: 2px solid #0f0;
-  padding: 20px;
-  max-width: 600px;
-  margin: auto;
-  background-color: #111;
-}
-
-.post-title {
-  color: #f0f;
-  font-size: 20px;
-}
-
-.post-date {
-  font-size: 10px;
-  color: #0f0;
-  margin-bottom: 20px;
-}
-
-.post-content {
-  font-size: 10px;
-}
-
-.post-image {
-  text-align: center;
-  margin: 20px 0;
-}
-.post-image img {
-  max-width: 100%;
-  height: auto;
-  border: 3px solid #000;
+.blog-message {
+    margin-top: 2rem;
+    font-size: 1.2rem;
 }
