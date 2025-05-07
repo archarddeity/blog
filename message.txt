@@ -1,1 +1,1 @@
-Welcome to my simple blog powered by Bootstrap and Python!
+Welcome to my simple blog powered by Bootstrap and Python! 
