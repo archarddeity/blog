@@ -1,8 +1,62 @@
-body {
+/* Retro Colors */
+:root {
+    --bg: #000000;
+    --text: #00ff00;
+    --accent: #ff00ff;
+    --border: #00ff00;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  
+  .post-container {
+    max-width: 700px;
+    margin: 2rem auto;
     padding: 2rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-.blog-message {
-    margin-top: 2rem;
+    border: 2px solid var(--border);
+    background-color: #111;
+  }
+  
+  .post-title {
     font-size: 1.2rem;
-}
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  
+  .post-date {
+    font-size: 0.7rem;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+  
+  .post-content p {
+    margin-bottom: 1rem;
+  }
+  
+  /* Mobile tweaks */
+  @media (max-width: 600px) {
+    body {
+      font-size: 10px;
+    }
+  
+    .post-container {
+      margin: 1rem;
+      padding: 1rem;
+    }
+  
+    .post-title {
+      font-size: 1rem;
+    }
+  }
+  
