@@ -22,24 +22,27 @@ jobs:
       NOTION_HASH: ${{ secrets.NOTION_HASH }}
 
     steps:
+      # Checkout repo to get the latest files
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
+      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 🔁 New step: Auto-generate new message.txt every 5 minutes
+      # 🔁 Auto-generate new message.txt every 5 minutes
       - name: Generate new message.txt
         run: python update_message.py
 
-      # ✅ Commit and push updated message.txt using PAT
+      # ✅ Commit and push updated message.txt using PAT (Personal Access Token)
       - name: Commit and push message.txt
         env:
           TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -52,10 +55,11 @@ jobs:
           git commit -m "Auto: New message.txt from scheduler" || echo "No message.txt changes"
           git push || echo "No changes pushed"
 
-      # Run build script
+      # Run build script to update index.html
       - name: Run build script
         run: python build.py
 
+      # ✅ Commit and push updated index.html
       - name: Commit and push index.html
         env:
           TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -68,6 +72,7 @@ jobs:
           git commit -m "Auto: Update index.html from message.txt" || echo "No index.html changes"
           git push || echo "No changes pushed"
 
+      # Upload site files as an artifact
       - name: Upload site files as artifact (v4)
         uses: actions/upload-artifact@v4
         with:
