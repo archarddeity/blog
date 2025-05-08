@@ -37,7 +37,6 @@
   .post-date {
     font-size: 14px;
     color: var(--text);
-    margin-bottom: 1.5rem;
   }
   
   .post-content p {
@@ -72,4 +71,9 @@
   
   .post-content {
     font-size: 14px;
+}
+
+hr {
+  margin: 20px 0;
+  color: var(--text)
 }
