@@ -3,110 +3,148 @@ import pytz
 import os
 import requests
 from datetime import datetime
-from dotenv import load_dotenv  # type: ignore
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 TENOR_API_KEY = os.getenv("TENOR_API_KEY")
 
-# --- Tenor GIF Fetcher ---
 def fetch_anime_gif(keyword):
-    query = f"{keyword} anime"
-    url = "https://tenor.googleapis.com/v2/search"
-    params = {
-        "q": query,
-        "key": TENOR_API_KEY,
-        "limit": 1,
-        "media_filter": "minimal",
-        "contentfilter": "high"
-    }
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        results = response.json().get("results")
+    """Fetch anime GIF from Tenor API with timeout and error handling"""
+    try:
+        query = f"{keyword} anime"
+        url = "https://tenor.googleapis.com/v2/search"
+        params = {
+            "q": query,
+            "key": TENOR_API_KEY,
+            "limit": 1,
+            "media_filter": "minimal",
+            "contentfilter": "high"
+        }
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        results = response.json().get("results", [])
         if results:
             return results[0]["media_formats"]["gif"]["url"]
+    except (requests.RequestException, KeyError) as e:
+        print(f"Error fetching GIF: {e}")
     return None
 
-# --- Timezone ---
-user_timezone = pytz.timezone("America/New_York")
+def process_message_file():
+    """Read and process message.txt with error handling"""
+    try:
+        with open("message.txt", "r", encoding="utf-8") as f:
+            return f.readlines()
+    except IOError as e:
+        print(f"Error reading message.txt: {e}")
+        return []
 
-# --- Read and Parse message.txt ---
-with open("message.txt", "r", encoding="utf-8") as f:
-    lines = f.readlines()
+def generate_html_content(lines):
+    """Generate HTML content from message lines"""
+    content_lines = []
+    titles = []
 
-content_lines = []
-titles = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            content_lines.append("")
+            continue
 
-for line in lines:
-    line = line.strip()
+        if line.startswith("!cmt"):
+            continue
 
-    if not line:
-        content_lines.append("")  # Paragraph breaks
-        continue
+        line = re.sub(r"!cmt-.*?-!", "", line)
 
-    if line.startswith("!cmt"):
-        continue
+        if re.match(r"\*-.+?-\*", line):
+            titles.append(line)
+            continue
 
-    line = re.sub(r"!cmt-.*?-!", "", line)
+        if line.startswith("!pic "):
+            link = line[5:].strip()
+            content_lines.append(f'<div class="post-image"><img src="{link}" alt="Image" loading="lazy" /></div>')
+            continue
 
-    if re.match(r"\*-.+?-\*", line):
-        titles.append(line)
-        continue
+        if line.startswith("!gif "):
+            keyword = line[5:].strip()
+            gif_url = fetch_anime_gif(keyword)
+            if gif_url:
+                content_lines.append(f'<div class="post-gif"><img src="{gif_url}" alt="{keyword} gif" loading="lazy" /></div>')
+            else:
+                content_lines.append(f'<div class="post-gif">[GIF not found for: {keyword}]</div>')
+            continue
 
-    if line.startswith("!pic "):
-        link = line[5:].strip()
-        content_lines.append(f'<div class="post-image"><img src="{link}" alt="Image" /></div>')
-        continue
+        content_lines.append(f"<p>{line}</p>")
 
-    if line.startswith("!gif "):
-        keyword = line[5:].strip()
-        gif_url = fetch_anime_gif(keyword)
-        if gif_url:
-            content_lines.append(f'<div class="post-gif"><img src="{gif_url}" alt="{keyword} gif" /></div>')
-        else:
-            content_lines.append(f'<div class="post-gif">[GIF not found for: {keyword}]</div>')
-        continue
+    return content_lines, titles
 
-    content_lines.append(line)
+def get_main_title(titles):
+    """Determine the main title from titles list"""
+    if len(titles) > 1:
+        return "Too Much Title"
+    elif titles:
+        return re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
+    return "My Retro Adventure"
 
-# --- Build HTML content ---
-html_content = "<br><br>".join(content_lines).replace("\n", " ")
+def get_current_datetime():
+    """Get current datetime in user's timezone"""
+    user_timezone = pytz.timezone("America/New_York")
+    now_utc = datetime.now(pytz.utc)
+    return now_utc.astimezone(user_timezone).strftime("%B %d, %Y — %I:%M %p")
 
-# --- Title logic ---
-if len(titles) > 1:
-    title_text = "Too Much Title"
-elif titles:
-    title_text = re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
-else:
-    title_text = "My Retro Adventure"
+def generate_titles_html(titles):
+    """Generate HTML for titles list"""
+    if not titles:
+        return "<p>No titles found.</p>"
+    
+    items = "\n".join(
+        f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" 
+        for t in titles
+    )
+    return f"<ul>\n{items}\n</ul>"
 
-# --- Titles HTML block ---
-if titles:
-    titles_html = "<ul>\n" + "\n".join(
-        f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" for t in titles
-    ) + "\n</ul>"
-else:
-    titles_html = "<p>No titles found.</p>"
+def build_html_template(content_lines, titles):
+    """Build final HTML by populating template"""
+    try:
+        with open("template.html", "r", encoding="utf-8") as f:
+            template = f.read()
+    except IOError as e:
+        print(f"Error reading template: {e}")
+        return None
 
-# --- Date ---
-now_utc = datetime.now(pytz.utc)
-user_time = now_utc.astimezone(user_timezone)
-formatted_datetime = user_time.strftime("%B %d, %Y — %I:%M %p")
+    html_content = "<br><br>".join(content_lines)
+    title_text = get_main_title(titles)
+    formatted_datetime = get_current_datetime()
+    titles_html = generate_titles_html(titles)
 
-# --- Read and populate template ---
-with open("template.html", "r", encoding="utf-8") as f:
-    template = f.read()
+    return (
+        template.replace("{{content}}", html_content)
+               .replace("{{date}}", formatted_datetime)
+               .replace("{{titles}}", titles_html)
+               .replace("{{main_title}}", title_text)
+    )
 
-final_html = (
-    template.replace("{{content}}", html_content)
-            .replace("{{date}}", formatted_datetime)
-            .replace("{{titles}}", titles_html)
-            .replace("{{main_title}}", title_text)
-)
+def write_output_file(html_content):
+    """Write final HTML to index.html"""
+    try:
+        with open("index.html", "w", encoding="utf-8") as f:
+            f.write(html_content)
+        print("✅ index.html updated successfully!")
+        return True
+    except IOError as e:
+        print(f"Error writing index.html: {e}")
+        return False
 
-# --- Output final HTML ---
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(final_html)
+def main():
+    lines = process_message_file()
+    if not lines:
+        return
 
-print("✅ index.html updated from message.txt!")
+    content_lines, titles = generate_html_content(lines)
+    final_html = build_html_template(content_lines, titles)
+    
+    if final_html:
+        write_output_file(final_html)
+
+if __name__ == "__main__":
+    main()
