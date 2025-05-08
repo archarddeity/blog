@@ -57,6 +57,7 @@ def process_message_file():
 
 def generate_content():
     """Generate HTML content from message file"""
+    print("\n=== Generating content ===")
     lines = process_message_file()
     if not lines:
         print("Warning: No content found in message.txt", file=sys.stderr)
@@ -65,28 +66,32 @@ def generate_content():
     content_lines = []
     titles = []
 
-    for line in lines:
+    for i, line in enumerate(lines, 1):
         line = line.strip()
         if not line:
             content_lines.append("")
             continue
 
         if line.startswith("!cmt"):
+            print(f"Skipping comment on line {i}")
             continue
 
         line = re.sub(r"!cmt-.*?-!", "", line)
 
         if re.match(r"\*-.+?-\*", line):
+            print(f"Found title on line {i}: {line}")
             titles.append(line)
             continue
 
         if line.startswith("!pic "):
             link = line[5:].strip()
+            print(f"Processing image on line {i}: {link}")
             content_lines.append(f'<div class="post-image"><img src="{link}" alt="Image" loading="lazy" /></div>')
             continue
 
         if line.startswith("!gif "):
             keyword = line[5:].strip()
+            print(f"Processing GIF on line {i}: {keyword}")
             gif_url = fetch_anime_gif(keyword)
             content_lines.append(f'<div class="post-gif"><img src="{gif_url}" alt="{keyword} gif" loading="lazy" /></div>')
             continue
@@ -105,6 +110,7 @@ def get_main_title(titles):
 
 def build_html(content, titles):
     """Build HTML from template with content"""
+    print("\n=== Building HTML ===")
     try:
         with open("template.html", "r", encoding="utf-8") as f:
             template = f.read()
@@ -115,63 +121,80 @@ def build_html(content, titles):
     title_text = get_main_title(titles)
     date_text = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
     
+    print(f"Main Title: {title_text}")
+    print(f"Current Date: {date_text}")
+    
     title_items = []
     for t in titles:
         cleaned_title = re.sub(r'^\*-(.+?)-\*$', r'\1', t)
         title_items.append(f"<li>{cleaned_title}</li>")
     
     titles_html = "<ul>\n" + "\n".join(title_items) + "\n</ul>" if titles else ""
+    print(f"Titles HTML: {titles_html[:50]}...")
 
-    return (
+    html = (
         template.replace("{{content}}", content)
                .replace("{{date}}", date_text)
                .replace("{{titles}}", titles_html)
                .replace("{{main_title}}", title_text)
     )
+    
+    print("HTML generation complete")
+    return html
 
 def write_output(html):
     """Write HTML output with validation"""
+    print("\n=== Writing output ===")
     try:
         # Write the file
         with open("index.html", "w", encoding="utf-8") as f:
             f.write(html)
-        print(f"Successfully wrote {len(html)} bytes to index.html")
+        print(f"✓ Wrote {len(html)} bytes to index.html")
         
-        # Verify the write operation
+        # Verify file exists and has content
+        file_stats = os.stat("index.html")
+        print(f"✓ File size: {file_stats.st_size} bytes")
+        if file_stats.st_size == 0:
+            raise ValueError("File is empty after writing!")
+        
+        # Check for template tags
         with open("index.html", "r", encoding="utf-8") as f:
             content = f.read()
-            if not content:
-                print("Error: index.html is empty after writing", file=sys.stderr)
-                return False
-                
             if "{{" in content:
-                print("Warning: Unprocessed template tags remain in output", file=sys.stderr)
-                print("Found in content:", content[content.find("{{"):content.find("{{")+50], "...", file=sys.stderr)
-                return False
-                
+                error_position = content.find("{{")
+                error_context = content[max(0, error_position-20):error_position+30]
+                raise ValueError(f"Unprocessed template tags found near: ...{error_context}...")
+        
+        print("✓ index.html validated successfully")
         return True
         
     except Exception as e:
-        print(f"Error writing index.html: {e}", file=sys.stderr)
+        print(f"❌ Error in write_output(): {str(e)}", file=sys.stderr)
         return False
 
 def main():
     """Main execution function"""
     print("\n=== Starting build process ===")
+    start_time = datetime.now()
     
-    content, titles = generate_content()
-    if content is None:
-        print("Error: No content to build", file=sys.stderr)
-        sys.exit(1)
+    try:
+        content, titles = generate_content()
+        if content is None:
+            raise ValueError("No content to build")
 
-    html = build_html(content, titles)
-    if html is None:
-        sys.exit(1)
+        html = build_html(content, titles)
+        if html is None:
+            raise ValueError("Failed to build HTML")
 
-    if not write_output(html):
-        sys.exit(1)
+        if not write_output(html):
+            raise ValueError("Failed to write output")
+
+        elapsed = datetime.now() - start_time
+        print(f"\n=== Build completed successfully in {elapsed.total_seconds():.2f}s ===")
         
-    print("=== Build completed successfully ===\n")
+    except Exception as e:
+        print(f"\n❌ Build failed: {str(e)}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

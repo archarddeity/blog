@@ -24,78 +24,68 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Get complete history
+          fetch-depth: 0
 
-      # 2. Set up Python
+      # 2. Debug initial state
+      - name: Debug initial files
+        run: |
+          echo "=== Initial files ==="
+          ls -la
+          echo "=== message.txt ==="
+          cat message.txt || echo "No message.txt"
+          echo "=== template.html ==="
+          head -n 5 template.html || echo "No template.html"
+
+      # 3. Set up environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
 
-      # 3. Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Generate new content
+      # 4. Generate content
       - name: Generate content
         run: python update_message.py
 
-      # 5. Verify message.txt was updated
-      - name: Verify message update
-        run: |
-          echo "=== message.txt last modified ==="
-          stat -c %y message.txt
-          echo "=== First 5 lines ==="
-          head -n 5 message.txt
-
-      # 6. Build the site
+      # 5. Build site
       - name: Build site
         run: python build.py
 
-      # 7. Verify index.html
-      - name: Verify index.html
+      # 6. Verify changes
+      - name: Verify changes
         run: |
-          echo "=== index.html size ==="
-          ls -lh index.html
-          echo "=== Checking for template tags ==="
-          if grep -q "{{" index.html; then
-            echo "Error: Unprocessed template tags found"
-            exit 1
-          fi
+          echo "=== Current files ==="
+          ls -la
+          echo "=== index.html diff ==="
+          git diff --color index.html || echo "No changes yet"
+          echo "=== index.html content ==="
+          head -n 20 index.html
 
-      # 8. Generate OIDC token
-      - name: Generate OIDC token
-        id: oidc-token
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const token = await core.getIDToken()
-            core.setOutput('token', token)
-
-      # 9. Direct deployment (for scheduled runs)
-      - name: Deploy via API
-        if: github.event_name == 'schedule'
+      # 7. Force commit changes
+      - name: Commit changes
         run: |
-          curl -X POST \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{
-              "artifact_url": "",
-              "pages_build": {
-                "sha": "${{ github.sha }}",
-                "build_log_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-              },
-              "oidc_token": "${{ steps.oidc-token.outputs.token }}"
-            }' \
-            "https://api.github.com/repos/${{ github.repository }}/pages/builds"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git push
 
-      # 10. Manual deployment (for workflow_dispatch)
-      - name: Deploy via Pages Action
-        if: github.event_name != 'schedule'
+      # 8. Deploy to Pages
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .
+          clean: true
+
+      # 9. Final verification
+      - name: Verify deployment
+        run: |
+          echo "=== Deployment verification ==="
+          echo "Pages should be available at:"
+          echo "https://${{ github.repository_owner }}.github.io/${{ github.repository }}"
