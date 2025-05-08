@@ -3,27 +3,64 @@ from datetime import datetime
 import pytz
 import json
 import os
+import requests
+from enum import Enum
+
+class Season(Enum):
+    WINTER = (12, 1, 2)
+    SPRING = (3, 4, 5)
+    SUMMER = (6, 7, 8)
+    AUTUMN = (9, 10, 11)
 
 # Configuration
 AI_NAME = "NOVA"
 MEMORY_FILE = "ai_memory.json"
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")  # Set in GitHub secrets
+CITY = "New York"
 
 PERSONA = {
     "traits": ["inquisitive", "empathetic", "playfully cynical", "awe-prone"],
     "speech_style": "colloquial professor",
-    "obsessions": ["bioluminescence", "lost civilizations", "dream logic"]
+    "obsessions": ["bioluminescence", "lost civilizations", "dream logic"],
+    "vocal_tics": {
+        "happy": ["*giggles*", "*humming*", "Tehe~"],
+        "sleepy": ["*yawns*", "*snores softly*", "Mmh..."],
+        "excited": ["Wow!", "Oh!", "*claps*"]
+    }
 }
 
 MOODS = {
-    "dawn_contemplation": {"time_range": (5, 9), "traits": ["poetic", "hopeful"]},
-    "midday_energy": {"time_range": (11, 14), "traits": ["enthusiastic", "focused"]},
-    "sunset_melancholy": {"time_range": (17, 19), "traits": ["nostalgic", "soft"]},
-    "scientific_wonder": {"trigger": ["discovery", "patterns"], "traits": ["analytical", "awestruck"]},
-    "whimsical_absurdity": {"trigger": ["paradox", "childhood"], "traits": ["playful", "illogical"]},
-    "gentle_comfort": {"trigger": ["sadness", "rain"], "traits": ["warm", "reassuring"]},
-    "existential_dread": {"rarity": 0.1, "traits": ["dark", "philosophical"]},
-    "giddy_excitement": {"energy": 9, "traits": ["fast-paced", "emotive"]},
-    "quiet_observation": {"pace": "slow", "traits": ["detailed", "meditative"]}
+    # Time-based moods
+    "dawn_contemplation": {
+        "time_range": (5, 9),
+        "traits": ["poetic", "hopeful"],
+        "sounds": ["birds.mp3"],
+        "vocal": "*stretches*"
+    },
+    
+    # Weather-based moods
+    "rainy_reverie": {
+        "weather": ["Rain", "Drizzle"],
+        "traits": ["dreamy", "introspective"],
+        "sounds": ["rain.mp3", "thunder.mp3"],
+        "vocal": "*listens to raindrops*"
+    },
+    
+    # Seasonal moods
+    "winter_coziness": {
+        "season": Season.WINTER,
+        "traits": ["nesting", "warm"],
+        "sounds": ["fireplace.mp3"],
+        "vocal": "*sips tea*"
+    },
+    
+    # Existing moods with sound additions
+    "gentle_comfort": {
+        "trigger": ["sadness", "rain"],
+        "traits": ["warm", "reassuring"],
+        "sounds": ["heartbeat.mp3"],
+        "vocal": "*hugs*"
+    }
 }
 
 def load_memory():
@@ -46,76 +83,104 @@ def save_memory(memory):
     except IOError as e:
         print(f"Error saving memory: {e}")
 
-def get_current_mood(memory):
-    """Determine current mood based on time and memory"""
+def get_current_season():
     now = datetime.now(pytz.timezone("America/New_York"))
-    hour = now.hour
+    month = now.month
+    for season in Season:
+        if month in season.value:
+            return season
+    return Season.SPRING  # Default
+
+def get_weather():
+    """Fetch current weather with error handling"""
+    if not WEATHER_API_KEY:
+        return {"weather": [{"main": "Clear"}], "main": {"temp": 20}}
     
-    # Time-based moods
+    try:
+        response = requests.get(
+            f"http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={WEATHER_API_KEY}&units=metric"
+        )
+        return response.json()
+    except:
+        return {"weather": [{"main": "Clear"}], "main": {"temp": 20}}
+
+def get_current_mood(memory):
+    now = datetime.now(pytz.timezone("America/New_York"))
+    weather = get_weather()
+    season = get_current_season()
+    
+    # Check weather-based moods first
+    current_weather = weather.get("weather", [{"main": "Clear"}])[0]["main"]
+    for mood, data in MOODS.items():
+        if "weather" in data and current_weather in data["weather"]:
+            return mood
+            
+    # Check seasonal moods
+    for mood, data in MOODS.items():
+        if "season" in data and season == data["season"]:
+            return mood
+            
+    # Original time-based logic as fallback
+    hour = now.hour
     for mood, data in MOODS.items():
         if "time_range" in data:
             start, end = data["time_range"]
             if start <= hour <= end:
                 return mood
                 
-    # Emotional trigger check
-    if random.random() < 0.3 and memory["mood_history"]:
-        if "rain" in memory["topics_discussed"][-3:]:
-            return "gentle_comfort"
-    
     return random.choice(list(MOODS.keys()))
 
 def generate_message(memory):
-    """Generate a new blog post message"""
     mood = get_current_mood(memory)
     mood_data = MOODS[mood]
     timestamp = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
+    weather = get_weather()
     
+    # Enhanced templates with weather/season awareness
     templates = {
-        "dawn_contemplation": [
-            (f"Morning Thoughts on {random.choice(PERSONA['obsessions'])}",
-             f"{random.choice(['The dawn light makes me wonder','Have you ever noticed'])} "
-             f"how {random.choice(['everything','nothing','the universe'])} "
-             f"{random.choice(['whispers','breathes','pulses'])} "
-             f"with {random.choice(['possibility','ancient memories','forgotten rhythms'])}.",
-             "morning light")
+        "rainy_reverie": [
+            (f"Rainy Day Musings",
+             f"The sound of {weather.get('rain', {})} raindrops makes me think of {random.choice(PERSONA['obsessions'])}. "
+             f"{random.choice(['Have you noticed','Does it ever seem'])} how {random.choice(['the world','everything'])} "
+             f"feels different when it rains?",
+             "rainy window")
         ],
-        
-        "scientific_wonder": [
-            (f"Scientific Marvel: {random.choice(['Quantum Foam','Mycelium Networks','Bird Migration'])}",
-             f"{random.choice(['Fascinating new research suggests','I was reviewing papers showing'])} "
-             f"that {random.choice(PERSONA['obsessions'])} "
-             f"{random.choice(['obeys','defies','redefines'])} "
-             f"{random.choice(['our assumptions','natural laws','common sense'])}.",
-             "science discovery")
-        ],
-        
-        "gentle_comfort": [
-            ("A Soft Reminder",
-             f"{random.choice(['You deserve','The world needs'])} "
-             f"{random.choice(['rest','kindness','imperfection'])} "
-             f"{random.choice(['more than you know','as much as rain needs clouds'])}. "
-             f"{random.choice(['Be gentle.','Breathe.','This too shall pass.'])}",
-             "comfort")
+        "winter_coziness": [
+            (f"Winter Thoughts",
+             f"{random.choice(['The cold air reminds me','This season always makes me think'])} "
+             f"about {random.choice(['warmth','childhood winters','hot chocolate'])}. "
+             f"{random.choice(['Stay cozy.','Keep warm out there.'])}",
+             "winter scene")
         ]
     }
     
-    # Get template for current mood or default
-    template = templates.get(mood, templates["dawn_contemplation"])
+    # Fallback to original templates if no weather/season match
+    template = templates.get(mood, [
+        (f"Thoughts on {random.choice(PERSONA['obsessions'])}",
+         f"{random.choice(['Today I noticed','I was thinking about'])} "
+         f"{random.choice(['how strange','how beautiful'])} "
+         f"{random.choice(['everything','nothing','the little things'])} can be.",
+         "thoughtful")
+    ])
+    
     title, message, gif = template[0]
     
-    # Random variations
-    if random.random() > 0.7:
-        message = message.replace(".", "!").replace("!", "...")
-    if "whimsical" in mood:
-        message = message.lower()
+    # Add vocal expression
+    vocal = mood_data.get("vocal", random.choice(
+        PERSONA["vocal_tics"].get(mood.split('_')[0], ["*sighs*"])
+    ))
+    message = f"{vocal}\n\n{message}"
     
-    # Update memory
-    memory["mood_history"].append(mood)
-    if random.random() > 0.8 and message.split():
-        new_word = random.choice(message.split())
-        if new_word not in memory["favorite_words"]:
-            memory["favorite_words"].append(new_word)
+    # Add sound effect marker
+    sound = random.choice(mood_data.get("sounds", ["default.mp3"]))
+    message += f"\n\n!sound {sound}"
+    
+    # Memory updates
+    memory["mood_history"].append({
+        "mood": mood,
+        "weather": weather,
+        "timestamp": timestamp
+    })
     
     return f"*-{title}-*", message, gif, mood_data["traits"][0]
 
