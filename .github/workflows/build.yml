@@ -22,12 +22,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify environment
+      - name: Clean action cache
         run: |
-          echo "Python version: $(python --version)"
-          echo "Pip version: $(pip --version)"
-          echo "Current directory: $(pwd)"
-          ls -la
+          # Clear any cached action references
+          rm -rf ~/.local/share/act/ ~/.cache/act/
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -53,7 +51,7 @@ jobs:
             exit 1
           fi
 
-      - name: Upload GitHub Pages artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v1
         with:
           path: |
