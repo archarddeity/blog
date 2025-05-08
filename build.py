@@ -10,8 +10,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TENOR_API_KEY = os.getenv("TENOR_API_KEY")
+DEFAULT_GIF_URL = "https://media.tenor.com/5DS4fJXQqAAAAAC/loading.gif"
 
 def fetch_anime_gif(keyword):
+    """Fetch anime GIF from Tenor API with robust error handling"""
     try:
         query = f"{keyword} anime"
         url = "https://tenor.googleapis.com/v2/search"
@@ -22,26 +24,39 @@ def fetch_anime_gif(keyword):
             "media_filter": "minimal",
             "contentfilter": "high"
         }
+        
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
+        
         results = response.json().get("results", [])
         if results:
             return results[0]["media_formats"]["gif"]["url"]
-    except Exception as e:
-        print(f"Error fetching GIF: {e}", file=sys.stderr)
-    return None
+        return DEFAULT_GIF_URL
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching GIF from Tenor API: {e}", file=sys.stderr)
+        return DEFAULT_GIF_URL
+    except (KeyError, ValueError) as e:
+        print(f"Error parsing Tenor API response: {e}", file=sys.stderr)
+        return DEFAULT_GIF_URL
 
 def process_message_file():
+    """Read message file with error handling"""
     try:
         with open("message.txt", "r", encoding="utf-8") as f:
             return f.readlines()
+    except FileNotFoundError:
+        print("Error: message.txt not found", file=sys.stderr)
+        return []
     except Exception as e:
         print(f"Error reading message.txt: {e}", file=sys.stderr)
         return []
 
 def generate_content():
+    """Generate HTML content from message file"""
     lines = process_message_file()
     if not lines:
+        print("Warning: No content found in message.txt", file=sys.stderr)
         return None, None
 
     content_lines = []
@@ -70,10 +85,7 @@ def generate_content():
         if line.startswith("!gif "):
             keyword = line[5:].strip()
             gif_url = fetch_anime_gif(keyword)
-            if gif_url:
-                content_lines.append(f'<div class="post-gif"><img src="{gif_url}" alt="{keyword} gif" loading="lazy" /></div>')
-            else:
-                content_lines.append(f'<div class="post-gif">[GIF not found for: {keyword}]</div>')
+            content_lines.append(f'<div class="post-gif"><img src="{gif_url}" alt="{keyword} gif" loading="lazy" /></div>')
             continue
 
         content_lines.append(f"<p>{line}</p>")
@@ -81,13 +93,15 @@ def generate_content():
     return "\n".join(content_lines), titles
 
 def get_main_title(titles):
+    """Extract main title from titles list"""
     if not titles:
         return "My Retro Adventure"
     if len(titles) > 1:
-        return "Too Much Title"
+        return "Multiple Titles Today"
     return re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
 
 def build_html(content, titles):
+    """Build HTML from template with content"""
     try:
         with open("template.html", "r", encoding="utf-8") as f:
             template = f.read()
@@ -101,7 +115,7 @@ def build_html(content, titles):
     titles_html = "<ul>\n" + "\n".join(
         f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" 
         for t in titles
-    ) + "\n</ul>" if titles else "<p>No titles found.</p>"
+    ) + "\n</ul>" if titles else ""
 
     return (
         template.replace("{{content}}", content)
@@ -111,19 +125,30 @@ def build_html(content, titles):
     )
 
 def write_output(html):
+    """Write HTML output with validation"""
     try:
         with open("index.html", "w", encoding="utf-8") as f:
             f.write(html)
-        print("✅ Successfully updated index.html")
+        
+        # Verify no template tags remain
+        with open("index.html", "r", encoding="utf-8") as f:
+            content = f.read()
+            if "{{" in content:
+                print("Error: Template tags remain in output", file=sys.stderr)
+                return False
+        
+        print("Successfully generated index.html")
         return True
+        
     except Exception as e:
         print(f"Error writing index.html: {e}", file=sys.stderr)
         return False
 
 def main():
+    """Main execution function"""
     content, titles = generate_content()
     if content is None:
-        print("❌ No content to build", file=sys.stderr)
+        print("Error: No content to build", file=sys.stderr)
         sys.exit(1)
 
     html = build_html(content, titles)
@@ -132,12 +157,6 @@ def main():
 
     if not write_output(html):
         sys.exit(1)
-
-    # Verify no template tags remain
-    with open("index.html", "r", encoding="utf-8") as f:
-        if "{{" in f.read():
-            print("❌ Template tags remain in index.html", file=sys.stderr)
-            sys.exit(1)
 
 if __name__ == "__main__":
     main()

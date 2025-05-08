@@ -22,6 +22,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify environment
+        run: |
+          echo "Python version: $(python --version)"
+          echo "Pip version: $(pip --version)"
+          echo "Current directory: $(pwd)"
+          ls -la
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -45,17 +52,6 @@ jobs:
             echo "Error: Template tags remain in index.html"
             exit 1
           fi
-
-      # Workaround to preload upload-artifact@v3
-      - name: Create dummy file for preload
-        run: echo "temp" > dummy.txt
-
-      - name: Preload upload-artifact action (workaround for missing metadata)
-        uses: actions/upload-artifact@v3
-        with:
-          name: dummy
-          path: dummy.txt
-        continue-on-error: true
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v1
