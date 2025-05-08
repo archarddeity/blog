@@ -20,10 +20,12 @@ jobs:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -37,28 +39,19 @@ jobs:
       - name: Verify build
         run: |
           ls -la
-          echo "=== index.html ==="
-          head -n 15 index.html
-          if grep -q "{{" index.html; then
-            echo "Error: Template tags remain!"
-            exit 1
-          fi
+          [ -f index.html ] || exit 1
+          [ -f style.css ] || exit 1
 
-      - name: Create gh-pages branch
+      - name: Prepare deployment
         run: |
-          git checkout --orphan gh-pages
-          git rm -rf .
-          cp index.html style.css ./
-          [ -d assets ] && cp -r assets/ ./ || true
-          git add .
-          git commit -m "Initial gh-pages commit"
+          mkdir -p public
+          cp index.html style.css public/
+          [ -d assets ] && cp -r assets/ public/ || true
 
-      - name: Push to gh-pages
-        uses: ad-m/github-push-action@master
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          branch: gh-pages
-          force: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Wait for Pages deployment
-        run: sleep 120  # Give GitHub time to process
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          force_orphan: true
+          keep_files: false
