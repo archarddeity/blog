@@ -98,7 +98,6 @@ def get_main_title(titles):
         return "My Retro Adventure"
     if len(titles) > 1:
         return "Multiple Titles Today"
-    # Use raw string for regex to avoid backslash issues
     return re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
 
 def build_html(content, titles):
@@ -113,7 +112,6 @@ def build_html(content, titles):
     title_text = get_main_title(titles)
     date_text = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
     
-    # Fixed: Use raw strings for regex patterns and separate the list comprehension
     title_items = []
     for t in titles:
         cleaned_title = re.sub(r'^\*-(.+?)-\*$', r'\1', t)
@@ -123,30 +121,22 @@ def build_html(content, titles):
 
     return (
         template.replace("{{content}}", content)
-               .replace("{{date}}", date_text)
-               .replace("{{titles}}", titles_html)
-               .replace("{{main_title}}", title_text)
+                .replace("{{date}}", date_text)
+                .replace("{{titles}}", titles_html)
+                .replace("{{main_title}}", title_text)
     )
 
 def write_output(html):
-    """Write HTML output with validation"""
-    try:
-        with open("index.html", "w", encoding="utf-8") as f:
-            f.write(html)
-        
-        # Verify no template tags remain
-        with open("index.html", "r", encoding="utf-8") as f:
-            content = f.read()
-            if "{{" in content:
-                print("Error: Template tags remain in output", file=sys.stderr)
-                return False
-        
-        print("Successfully generated index.html")
-        return True
-        
-    except Exception as e:
-        print(f"Error writing index.html: {e}", file=sys.stderr)
-        return False
+    """Write HTML output with verification"""
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"Wrote {len(html)} bytes to index.html")
+    
+    # Verify write
+    with open("index.html", "r", encoding="utf-8") as f:
+        content = f.read()
+        if "{{" in content:
+            print("Warning: Template tags remain!")
 
 def main():
     """Main execution function"""
@@ -159,8 +149,7 @@ def main():
     if html is None:
         sys.exit(1)
 
-    if not write_output(html):
-        sys.exit(1)
+    write_output(html)
 
 if __name__ == "__main__":
     main()

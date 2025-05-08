@@ -2,13 +2,13 @@ name: AI Automation
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/5 * * * *'  # Runs every 5 minutes
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,49 +20,53 @@ jobs:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
     
     steps:
-      - name: Checkout
+      # 1. Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get complete history
 
-      - name: Setup Python
+      # 2. Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip'
 
+      # 3. Install dependencies
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
+      # 4. Generate new content
       - name: Generate content
         run: python update_message.py
 
+      # 5. Verify message.txt was updated
+      - name: Verify message update
+        run: |
+          echo "=== message.txt last modified ==="
+          stat -c %y message.txt
+          echo "=== First 5 lines ==="
+          head -n 5 message.txt
+
+      # 6. Build the site
       - name: Build site
         run: python build.py
 
-      - name: Verify build
+      # 7. Verify index.html
+      - name: Verify index.html
         run: |
+          echo "=== index.html size ==="
+          ls -lh index.html
+          echo "=== Checking for template tags ==="
           if grep -q "{{" index.html; then
-            echo "Template tags detected!"
+            echo "Error: Unprocessed template tags found"
             exit 1
           fi
 
-      - name: Prepare deployment
-        run: |
-          mkdir -p public
-          cp index.html style.css public/
-          [ -d assets ] && cp -r assets/ public/ || true
-
-      - name: Deploy (Direct API)
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          curl -X POST \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{"source":{"branch":"main","path":"/"}}' \
-            "https://api.github.com/repos/${{ github.repository }}/pages/builds"
-
-      - name: Deploy (Official Action)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/deploy-pages@v2
-
+      # 8. Generate OIDC token
       - name: Generate OIDC token
         id: oidc-token
         uses: actions/github-script@v7
@@ -70,3 +74,28 @@ jobs:
           script: |
             const token = await core.getIDToken()
             core.setOutput('token', token)
+
+      # 9. Direct deployment (for scheduled runs)
+      - name: Deploy via API
+        if: github.event_name == 'schedule'
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{
+              "artifact_url": "",
+              "pages_build": {
+                "sha": "${{ github.sha }}",
+                "build_log_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              },
+              "oidc_token": "${{ steps.oidc-token.outputs.token }}"
+            }' \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds"
+
+      # 10. Manual deployment (for workflow_dispatch)
+      - name: Deploy via Pages Action
+        if: github.event_name != 'schedule'
+        uses: actions/deploy-pages@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
