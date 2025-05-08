@@ -98,6 +98,7 @@ def get_main_title(titles):
         return "My Retro Adventure"
     if len(titles) > 1:
         return "Multiple Titles Today"
+    # Use raw string for regex to avoid backslash issues
     return re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
 
 def build_html(content, titles):
@@ -112,10 +113,13 @@ def build_html(content, titles):
     title_text = get_main_title(titles)
     date_text = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
     
-    titles_html = "<ul>\n" + "\n".join(
-        f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" 
-        for t in titles
-    ) + "\n</ul>" if titles else ""
+    # Fixed: Use raw strings for regex patterns and separate the list comprehension
+    title_items = []
+    for t in titles:
+        cleaned_title = re.sub(r'^\*-(.+?)-\*$', r'\1', t)
+        title_items.append(f"<li>{cleaned_title}</li>")
+    
+    titles_html = "<ul>\n" + "\n".join(title_items) + "\n</ul>" if titles else ""
 
     return (
         template.replace("{{content}}", content)
