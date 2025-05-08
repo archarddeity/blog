@@ -5,4 +5,4 @@
 Hello, this is Archard Deity. Currently, I'm on the process of making something I've never done before.
 
 !cmt - Image
-!gif hello
+!gif happy
