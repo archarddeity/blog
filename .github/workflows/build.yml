@@ -17,10 +17,10 @@ jobs:
 
     env:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
-
+    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Changed to v3 for compatibility
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -46,8 +46,8 @@ jobs:
             exit 1
           fi
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1  # Changed to v1 for compatibility
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
           path: |
             index.html
@@ -67,4 +67,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1  # Changed to v1 for compatibility
+        uses: actions/deploy-pages@v1
