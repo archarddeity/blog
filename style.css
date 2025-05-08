@@ -75,5 +75,19 @@
 
 hr {
   margin: 20px 0;
-  color: var(--text)
+  height: 1px;
+  background-color: var(--text);
+  outline: none;
+  border: none;
+}
+
+.post-gif {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.post-gif > img {
+  width: 100%;
 }
