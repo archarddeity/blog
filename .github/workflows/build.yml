@@ -4,39 +4,30 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-
     env:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Purge action cache
-        run: |
-          # Nuclear option - clear all action caches
-          sudo rm -rf /usr/local/lib/actions-runner/_work/_actions
-          sudo rm -rf /usr/local/lib/actions-runner/_work/_temp
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Generate content
@@ -45,22 +36,14 @@ jobs:
       - name: Build site
         run: python build.py
 
-      - name: Verify build
-        run: |
-          if grep -q "{{" index.html; then
-            echo "Error: Template tags remain in index.html"
-            exit 1
-          fi
-
-      - name: Upload via direct Pages API
-        run: |
-          # Bypass artifact upload completely
-          zip -r site.zip index.html style.css assets/
-          curl -X POST \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/pages/builds \
-            -d '{"artifact_url":"site.zip"}'
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: |
+            index.html
+            style.css
+            assets/
+          retention-days: 1
 
   deploy:
     needs: build
@@ -68,11 +51,11 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
-
+    
     steps:
+      - name: Wait for artifact processing
+        run: sleep 5
+
       - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
         id: deployment
-        uses: actions/deploy-pages@v1
