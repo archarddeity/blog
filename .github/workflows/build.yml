@@ -4,9 +4,8 @@ on:
   schedule:
     - cron: '*/5 * * * *'  # Every 5 minutes
   push:
-    paths:
-      - "message.txt"
-      - "template.html"
+    branches: [ main ]  # Trigger on any push to main branch
+  workflow_dispatch:    # Allow manual triggering
 
 jobs:
   build:
@@ -23,62 +22,41 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get complete history for proper diffs
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate new message.txt
-        run: python update_message.py
+      - name: Generate and build content
+        run: |
+          python update_message.py
+          python build.py
 
-      - name: Commit and push message.txt
+      - name: Commit and push all changes
         env:
           TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
+          
+          # Check for changes and commit/push if any exist
+          git add .
+          git diff --cached --quiet || git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
 
-          # Stash local changes before pull
-          git stash -u || echo "No unstaged changes to stash"
-          git pull --rebase
-          git stash pop || echo "No stashed changes to apply"
-
-          git add message.txt
-          git commit -m "Auto: New message.txt from scheduler" || echo "No message.txt changes"
-          git push || echo "No changes pushed"
-
-      - name: Run build script
-        run: python build.py
-
-      - name: Commit and push index.html
-        env:
-          TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
-
-          # Stash local changes before pull
-          git stash -u || echo "No unstaged changes to stash"
-          git pull --rebase
-          git stash pop || echo "No stashed changes to apply"
-
-          git add index.html
-          git commit -m "Auto: Update index.html from message.txt" || echo "No index.html changes"
-          git push || echo "No changes pushed"
-
-      - name: Upload site files as artifact (v4)
-        uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          name: github-pages
           path: |
             index.html
             style.css
@@ -96,4 +74,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v2
