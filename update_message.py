@@ -74,27 +74,29 @@ def generate_message(memory):
     templates = {
         "dawn_contemplation": [
             (f"Morning Thoughts on {random.choice(PERSONA['obsessions'])}",
-            f"{random.choice(['The dawn light makes me wonder','Have you ever noticed'])} "
-            f"how {random.choice(['everything','nothing','the universe'])} "
-            f"{random.choice(['whispers','breathes','pulses'])} "
-            f"with {random.choice(['possibility','ancient memories','forgotten rhythms'])}.",
-            "morning light"),
+             f"{random.choice(['The dawn light makes me wonder','Have you ever noticed'])} "
+             f"how {random.choice(['everything','nothing','the universe'])} "
+             f"{random.choice(['whispers','breathes','pulses'])} "
+             f"with {random.choice(['possibility','ancient memories','forgotten rhythms'])}.",
+             "morning light")
+        ],
         
         "scientific_wonder": [
             (f"Scientific Marvel: {random.choice(['Quantum Foam','Mycelium Networks','Bird Migration'])}",
-            f"{random.choice(['Fascinating new research suggests','I was reviewing papers showing'])} "
-            f"that {random.choice(PERSONA['obsessions'])} "
-            f"{random.choice(['obeys','defies','redefines'])} "
-            f"{random.choice(['our assumptions','natural laws','common sense'])}.",
-            "science discovery"),
+             f"{random.choice(['Fascinating new research suggests','I was reviewing papers showing'])} "
+             f"that {random.choice(PERSONA['obsessions'])} "
+             f"{random.choice(['obeys','defies','redefines'])} "
+             f"{random.choice(['our assumptions','natural laws','common sense'])}.",
+             "science discovery")
+        ],
         
         "gentle_comfort": [
             ("A Soft Reminder",
-            f"{random.choice(['You deserve','The world needs'])} "
-            f"{random.choice(['rest','kindness','imperfection'])} "
-            f"{random.choice(['more than you know','as much as rain needs clouds'])}. "
-            f"{random.choice(['Be gentle.','Breathe.','This too shall pass.'])}",
-            "comfort")
+             f"{random.choice(['You deserve','The world needs'])} "
+             f"{random.choice(['rest','kindness','imperfection'])} "
+             f"{random.choice(['more than you know','as much as rain needs clouds'])}. "
+             f"{random.choice(['Be gentle.','Breathe.','This too shall pass.'])}",
+             "comfort")
         ]
     }
     
