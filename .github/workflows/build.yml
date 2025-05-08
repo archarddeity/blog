@@ -7,43 +7,71 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
     env:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
     
     steps:
-      - uses: actions/checkout@v4
+      # Step 1: Completely clear action cache
+      - name: Purge action cache
+        run: |
+          sudo rm -rf /usr/local/lib/actions-runner/_work/_actions
+          sudo rm -rf /usr/local/lib/actions-runner/_work/_temp
+          sudo rm -rf ~/.cache/act
 
+      # Step 2: Checkout with fresh fetch
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get complete history to avoid cached references
+
+      # Step 3: Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip'
 
+      # Step 4: Install dependencies
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Step 5: Content generation
       - name: Generate content
         run: python update_message.py
 
+      # Step 6: Build site
       - name: Build site
         run: python build.py
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: |
-            index.html
-            style.css
-            assets/
-          retention-days: 1
+      # Step 7: Verify build
+      - name: Verify build
+        run: |
+          if grep -q "{{" index.html; then
+            echo "Error: Template tags remain in index.html"
+            exit 1
+          fi
+
+      # Step 8: Upload using alternative method
+      - name: Zip and upload via API
+        run: |
+          zip -r site.zip index.html style.css assets/
+          curl -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/artifacts \
+            -F "artifact=@site.zip" \
+            -F "name=pages-artifact" \
+            -F "retention_days=1"
 
   deploy:
     needs: build
@@ -51,11 +79,27 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+    permissions:
+      pages: write
+      id-token: write
+
     steps:
-      - name: Wait for artifact processing
-        run: sleep 5
+      - name: Download artifact via API
+        run: |
+          ARTIFACT_ID=$(curl -s \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
+            | jq '.artifacts[] | select(.name == "pages-artifact") | .id')
+          
+          curl -L \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID/zip" \
+            -o site.zip
+          
+          unzip site.zip
 
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
         id: deployment
+        uses: actions/deploy-pages@v2
