@@ -1,68 +1,14 @@
 import re
 import pytz
 import os
-import hmac
-import base64
-import hashlib
 import requests
-import sys
 from datetime import datetime
 from dotenv import load_dotenv  # type: ignore
 
 # Load environment variables
 load_dotenv()
 
-# --- Environment ---
 TENOR_API_KEY = os.getenv("TENOR_API_KEY")
-NOTION_SHARED_SECRET = os.getenv("NOTION_SHARED_SECRET")
-NOTION_HASH = os.getenv("NOTION_HASH")
-
-# Base64-encoded Notion URL for: https://www.notion.so/This-is-the-title-1ed2f479edae80de81cfe5505f44b7f7
-ENCODED_NOTION_URL = "aHR0cHM6Ly93d3cubm90aW9uLnNvL1RoaXMt" \
-                     "aXMtdGhlLXRpdGxlLTFlZDJmNDc5ZWRhZTgwZGU4MWNmZTU1MDVmNDRiN2Y3"
-
-# --- Decode Notion URL ---
-notion_url = base64.b64decode(ENCODED_NOTION_URL.encode()).decode()
-
-# --- Fetch Notion content ---
-response = requests.get(notion_url)
-if response.status_code != 200:
-    raise Exception("❌ Failed to fetch Notion content.")
-
-notion_content = response.text.strip()
-
-# --- Optional: Generate and print HMAC hash ---
-if "--generate-hash" in sys.argv:
-    if not NOTION_SHARED_SECRET:
-        raise Exception("❌ NOTION_SHARED_SECRET is required to generate hash.")
-    generated_hash = hmac.new(
-        NOTION_SHARED_SECRET.encode(),
-        notion_content.encode(),
-        hashlib.sha256
-    ).hexdigest()
-    print("✅ HMAC SHA-256 hash for current Notion content:")
-    print(generated_hash)
-    sys.exit(0)
-
-# --- Required secrets ---
-if not TENOR_API_KEY or not NOTION_SHARED_SECRET or not NOTION_HASH:
-    raise ValueError("❌ Missing TENOR_API_KEY, NOTION_SHARED_SECRET, or NOTION_HASH")
-
-# --- Verify Notion content ---
-computed_hash = hmac.new(
-    NOTION_SHARED_SECRET.encode(),
-    notion_content.encode(),
-    hashlib.sha256
-).hexdigest()
-
-if computed_hash != NOTION_HASH:
-    raise Exception("❌ HMAC verification failed. Content may have been tampered with.")
-
-# --- Write verified content to message.txt ---
-with open("message.txt", "w", encoding="utf-8") as f:
-    f.write(notion_content)
-
-print("✅ Notion content verified and saved to message.txt")
 
 # --- Tenor GIF Fetcher ---
 def fetch_anime_gif(keyword):
@@ -135,23 +81,32 @@ elif titles:
 else:
     title_text = "My Retro Adventure"
 
+# --- Titles HTML block ---
+if titles:
+    titles_html = "<ul>\n" + "\n".join(
+        f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" for t in titles
+    ) + "\n</ul>"
+else:
+    titles_html = "<p>No titles found.</p>"
+
 # --- Date ---
 now_utc = datetime.now(pytz.utc)
 user_time = now_utc.astimezone(user_timezone)
 formatted_datetime = user_time.strftime("%B %d, %Y — %I:%M %p")
 
-# --- Template ---
+# --- Read and populate template ---
 with open("template.html", "r", encoding="utf-8") as f:
     template = f.read()
 
 final_html = (
     template.replace("{{content}}", html_content)
             .replace("{{date}}", formatted_datetime)
-            .replace("My Retro Adventure", title_text)
+            .replace("{{titles}}", titles_html)
+            .replace("{{main_title}}", title_text)
 )
 
-# --- Output HTML ---
+# --- Output final HTML ---
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(final_html)
 
-print("✅ index.html updated!")
+print("✅ index.html updated from message.txt!")
