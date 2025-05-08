@@ -44,19 +44,16 @@ jobs:
             exit 1
           fi
 
-      - name: Upload artifact (direct method)
+      - name: Prepare Pages artifact
         run: |
-          # Create zip file
-          zip -r site.zip index.html style.css assets/
-          
-          # Upload using GitHub API
-          curl -X POST \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/actions/artifacts \
-            -F "artifact=@site.zip" \
-            -F "name=pages-artifact" \
-            -F "retention_days=1"
+          mkdir -p public
+          cp index.html style.css public/
+          cp -r assets/ public/ || true  # Ignore if assets doesn't exist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'public'
 
   deploy:
     needs: build
@@ -64,15 +61,11 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
-    steps:
-      - name: Download artifact
-        id: download-artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pages-artifact
-          path: .
+    permissions:
+      pages: write
+      id-token: write
 
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
