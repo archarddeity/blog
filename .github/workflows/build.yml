@@ -14,6 +14,9 @@ jobs:
       pages: write
       id-token: write
 
+    env:
+      TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
+
     steps:
       # Checkout repo - Only necessary to get the latest template.html
       - name: Checkout repo
@@ -33,8 +36,7 @@ jobs:
 
       # Run build script
       - name: Run build script
-        run: |
-          python build.py
+        run: python build.py
 
       # Commit and push changes
       - name: Commit and push changes

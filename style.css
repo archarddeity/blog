@@ -35,7 +35,7 @@
   }
   
   .post-date {
-    font-size: 0.7rem;
+    font-size: 14px;
     color: var(--text);
     margin-bottom: 1.5rem;
   }
@@ -70,3 +70,6 @@
     }
   }
   
+  .post-content {
+    font-size: 14px;
+}
