@@ -1,93 +1,92 @@
-/* Retro Colors */
 :root {
-    --bg: #000000;
-    --text: #00ff00;
-    --accent: #ff00ff;
-    --border: #00ff00;
-  }
-  
-  * {
-    box-sizing: border-box;
-  }
-  
-  body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: 'Press Start 2P', monospace;
-    font-size: 12px;
-    line-height: 1.6;
-  }
-  
-  .post-container {
-    max-width: 700px;
-    margin: 2rem auto;
-    padding: 2rem;
-    border: 2px solid var(--border);
-    background-color: #111;
-  }
-  
-  .post-title {
-    font-size: 1.2rem;
-    color: var(--accent);
-    margin-bottom: 0.5rem;
-  }
-  
-  .post-date {
-    font-size: 14px;
-    color: var(--text);
-  }
-  
-  .post-content p {
-    margin-bottom: 1rem;
-  }
-
-  .post-image {
-    text-align: center;
-    margin: 20px 0;
-  }
-  .post-image img {
-    max-width: 100%;
-    height: auto;
-    border: 3px solid #000;
-  }
-  
-  /* Mobile tweaks */
-  @media (max-width: 600px) {
-    body {
-      font-size: 10px;
-    }
-  
-    .post-container {
-      margin: 1rem;
-      padding: 1rem;
-    }
-  
-    .post-title {
-      font-size: 1rem;
-    }
-  }
-  
-  .post-content {
-    font-size: 14px;
+  --bg-color: #f0e6d2;
+  --text-color: #333;
+  --accent-color: #8b4513;
+  --link-color: #5d4037;
+  --border-color: #d4a76a;
 }
 
-hr {
+body {
+  font-family: 'Courier New', monospace;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-image: url('https://picsum.photos/800/600?random=3&grayscale');
+  background-attachment: fixed;
+  background-size: cover;
+  background-blend-mode: overlay;
+}
+
+header {
+  border-bottom: 2px dashed var(--border-color);
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+h1 {
+  color: var(--accent-color);
+  font-size: 2.5rem;
+  text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+
+.post-date {
+  font-style: italic;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.post-content {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.post-image, .post-gif {
   margin: 20px 0;
-  height: 1px;
-  background-color: var(--text);
-  outline: none;
-  border: none;
+  text-align: center;
 }
 
-.post-gif {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.post-image img, .post-gif img {
+  max-width: 100%;
+  border: 3px solid var(--border-color);
+  border-radius: 5px;
 }
 
-.post-gif > img {
-  width: 100%;
+footer {
+  margin-top: 40px;
+  border-top: 2px dashed var(--border-color);
+  padding-top: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Retro CRT effect */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 2px;
+  z-index: 9999;
+  pointer-events: none;
 }

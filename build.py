@@ -112,17 +112,23 @@ def build_html_template(content_lines, titles):
         print(f"Error reading template: {e}")
         return None
 
-    html_content = "<br><br>".join(content_lines)
+    html_content = "\n".join(content_lines)  # Changed from <br><br> to newlines
     title_text = get_main_title(titles)
     formatted_datetime = get_current_datetime()
     titles_html = generate_titles_html(titles)
 
-    return (
-        template.replace("{{content}}", html_content)
-               .replace("{{date}}", formatted_datetime)
-               .replace("{{titles}}", titles_html)
-               .replace("{{main_title}}", title_text)
-    )
+    # Ensure all template tags are replaced
+    final_html = template
+    if "{{content}}" in final_html:
+        final_html = final_html.replace("{{content}}", html_content)
+    if "{{date}}" in final_html:
+        final_html = final_html.replace("{{date}}", formatted_datetime)
+    if "{{titles}}" in final_html:
+        final_html = final_html.replace("{{titles}}", titles_html)
+    if "{{main_title}}" in final_html:
+        final_html = final_html.replace("{{main_title}}", title_text)
+
+    return final_html
 
 def write_output_file(html_content):
     """Write final HTML to index.html"""
@@ -138,13 +144,21 @@ def write_output_file(html_content):
 def main():
     lines = process_message_file()
     if not lines:
+        print("❌ No content found in message.txt")
         return
 
     content_lines, titles = generate_html_content(lines)
     final_html = build_html_template(content_lines, titles)
     
-    if final_html:
-        write_output_file(final_html)
+    if final_html and write_output_file(final_html):
+        # Verify the output
+        try:
+            with open("index.html", "r", encoding="utf-8") as f:
+                content = f.read()
+                if "{{" in content or "}}" in content:
+                    print("⚠️ Warning: Template tags remain in index.html")
+        except IOError as e:
+            print(f"Error verifying index.html: {e}")
 
 if __name__ == "__main__":
     main()
