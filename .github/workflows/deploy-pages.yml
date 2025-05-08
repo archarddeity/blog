@@ -19,41 +19,24 @@ jobs:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
     
     steps:
-      # Step 1: Completely clear action cache
-      - name: Purge action cache
-        run: |
-          sudo rm -rf /usr/local/lib/actions-runner/_work/_actions
-          sudo rm -rf /usr/local/lib/actions-runner/_work/_temp
-          sudo rm -rf ~/.cache/act
-
-      # Step 2: Checkout with fresh fetch
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Get complete history to avoid cached references
 
-      # Step 3: Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          cache: 'pip'
 
-      # Step 4: Install dependencies
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 5: Content generation
       - name: Generate content
         run: python update_message.py
 
-      # Step 6: Build site
       - name: Build site
         run: python build.py
 
-      # Step 7: Verify build
       - name: Verify build
         run: |
           if grep -q "{{" index.html; then
@@ -61,10 +44,12 @@ jobs:
             exit 1
           fi
 
-      # Step 8: Upload using alternative method
-      - name: Zip and upload via API
+      - name: Upload artifact (direct method)
         run: |
+          # Create zip file
           zip -r site.zip index.html style.css assets/
+          
+          # Upload using GitHub API
           curl -X POST \
             -H "Authorization: Bearer ${{ github.token }}" \
             -H "Accept: application/vnd.github.v3+json" \
@@ -79,26 +64,14 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
-
+    
     steps:
-      - name: Download artifact via API
-        run: |
-          ARTIFACT_ID=$(curl -s \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
-            | jq '.artifacts[] | select(.name == "pages-artifact") | .id')
-          
-          curl -L \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID/zip" \
-            -o site.zip
-          
-          unzip site.zip
+      - name: Download artifact
+        id: download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-artifact
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
