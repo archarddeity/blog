@@ -16,20 +16,28 @@ load_dotenv()
 TENOR_API_KEY = os.getenv("TENOR_API_KEY")
 NOTION_SHARED_SECRET = os.getenv("NOTION_SHARED_SECRET")
 NOTION_HASH = os.getenv("NOTION_HASH")
+NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+NOTION_PAGE_ID = os.getenv("NOTION_PAGE_ID")
 
-# Base64-encoded Notion URL for: https://www.notion.so/This-is-the-title-1ed2f479edae80de81cfe5505f44b7f7
-ENCODED_NOTION_URL = "aHR0cHM6Ly93d3cubm90aW9uLnNvL1RoaXMt" \
-                     "aXMtdGhlLXRpdGxlLTFlZDJmNDc5ZWRhZTgwZGU4MWNmZTU1MDVmNDRiN2Y3"
+# --- Check if Notion Page ID is provided ---
+if not NOTION_PAGE_ID:
+    raise ValueError("❌ NOTION_PAGE_ID is required.")
 
-# --- Decode Notion URL ---
-notion_url = base64.b64decode(ENCODED_NOTION_URL.encode()).decode()
+# --- Notion API Endpoint ---
+NOTION_API_URL = f"https://api.notion.com/v1/pages/{NOTION_PAGE_ID}"
 
 # --- Fetch Notion content ---
-response = requests.get(notion_url)
+headers = {
+    "Authorization": f"Bearer {NOTION_API_KEY}",
+    "Notion-Version": "2021-05-13"
+}
+
+response = requests.get(NOTION_API_URL, headers=headers)
 if response.status_code != 200:
     raise Exception("❌ Failed to fetch Notion content.")
 
-notion_content = response.text.strip()
+notion_content = response.json().get("properties", {}).get("content", {}).get("rich_text", [])
+notion_text = "".join([item["text"]["content"] for item in notion_content]).strip()
 
 # --- Optional: Generate and print HMAC hash ---
 if "--generate-hash" in sys.argv:
@@ -37,7 +45,7 @@ if "--generate-hash" in sys.argv:
         raise Exception("❌ NOTION_SHARED_SECRET is required to generate hash.")
     generated_hash = hmac.new(
         NOTION_SHARED_SECRET.encode(),
-        notion_content.encode(),
+        notion_text.encode(),
         hashlib.sha256
     ).hexdigest()
     print("✅ HMAC SHA-256 hash for current Notion content:")
@@ -51,7 +59,7 @@ if not TENOR_API_KEY or not NOTION_SHARED_SECRET or not NOTION_HASH:
 # --- Verify Notion content ---
 computed_hash = hmac.new(
     NOTION_SHARED_SECRET.encode(),
-    notion_content.encode(),
+    notion_text.encode(),
     hashlib.sha256
 ).hexdigest()
 
@@ -60,7 +68,7 @@ if computed_hash != NOTION_HASH:
 
 # --- Write verified content to message.txt ---
 with open("message.txt", "w", encoding="utf-8") as f:
-    f.write(notion_content)
+    f.write(notion_text)
 
 print("✅ Notion content verified and saved to message.txt")
 

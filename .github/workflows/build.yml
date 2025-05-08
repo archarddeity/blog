@@ -18,7 +18,9 @@ jobs:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
       NOTION_SHARED_SECRET: ${{ secrets.NOTION_SHARED_SECRET }}
       NOTION_HASH: ${{ secrets.NOTION_HASH }}
-
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+    
     steps:
       # Checkout repo - Only necessary to get the latest template.html
       - name: Checkout repo
