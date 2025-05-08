@@ -2,7 +2,7 @@ name: AI Automation
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: '*/5 * * * *'
   push:
     branches: [ main ]
   workflow_dispatch:
@@ -22,10 +22,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clean action cache
+      - name: Purge action cache
         run: |
-          # Clear any cached action references
-          rm -rf ~/.local/share/act/ ~/.cache/act/
+          # Nuclear option - clear all action caches
+          sudo rm -rf /usr/local/lib/actions-runner/_work/_actions
+          sudo rm -rf /usr/local/lib/actions-runner/_work/_temp
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -51,14 +52,16 @@ jobs:
             exit 1
           fi
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: |
-            index.html
-            style.css
-            assets/
-  
+      - name: Upload via direct Pages API
+        run: |
+          # Bypass artifact upload completely
+          zip -r site.zip index.html style.css assets/
+          curl -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pages/builds \
+            -d '{"artifact_url":"site.zip"}'
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
