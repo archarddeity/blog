@@ -2,6 +2,7 @@ import re
 import pytz
 import os
 import requests
+import sys
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -11,7 +12,6 @@ load_dotenv()
 TENOR_API_KEY = os.getenv("TENOR_API_KEY")
 
 def fetch_anime_gif(keyword):
-    """Fetch anime GIF from Tenor API with timeout and error handling"""
     try:
         query = f"{keyword} anime"
         url = "https://tenor.googleapis.com/v2/search"
@@ -27,21 +27,23 @@ def fetch_anime_gif(keyword):
         results = response.json().get("results", [])
         if results:
             return results[0]["media_formats"]["gif"]["url"]
-    except (requests.RequestException, KeyError) as e:
-        print(f"Error fetching GIF: {e}")
+    except Exception as e:
+        print(f"Error fetching GIF: {e}", file=sys.stderr)
     return None
 
 def process_message_file():
-    """Read and process message.txt with error handling"""
     try:
         with open("message.txt", "r", encoding="utf-8") as f:
             return f.readlines()
-    except IOError as e:
-        print(f"Error reading message.txt: {e}")
+    except Exception as e:
+        print(f"Error reading message.txt: {e}", file=sys.stderr)
         return []
 
-def generate_html_content(lines):
-    """Generate HTML content from message lines"""
+def generate_content():
+    lines = process_message_file()
+    if not lines:
+        return None, None
+
     content_lines = []
     titles = []
 
@@ -76,89 +78,66 @@ def generate_html_content(lines):
 
         content_lines.append(f"<p>{line}</p>")
 
-    return content_lines, titles
+    return "\n".join(content_lines), titles
 
 def get_main_title(titles):
-    """Determine the main title from titles list"""
+    if not titles:
+        return "My Retro Adventure"
     if len(titles) > 1:
         return "Too Much Title"
-    elif titles:
-        return re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
-    return "My Retro Adventure"
+    return re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0])
 
-def get_current_datetime():
-    """Get current datetime in user's timezone"""
-    user_timezone = pytz.timezone("America/New_York")
-    now_utc = datetime.now(pytz.utc)
-    return now_utc.astimezone(user_timezone).strftime("%B %d, %Y — %I:%M %p")
-
-def generate_titles_html(titles):
-    """Generate HTML for titles list"""
-    if not titles:
-        return "<p>No titles found.</p>"
-    
-    items = "\n".join(
-        f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" 
-        for t in titles
-    )
-    return f"<ul>\n{items}\n</ul>"
-
-def build_html_template(content_lines, titles):
-    """Build final HTML by populating template"""
+def build_html(content, titles):
     try:
         with open("template.html", "r", encoding="utf-8") as f:
             template = f.read()
-    except IOError as e:
-        print(f"Error reading template: {e}")
+    except Exception as e:
+        print(f"Error reading template: {e}", file=sys.stderr)
         return None
 
-    html_content = "\n".join(content_lines)  # Changed from <br><br> to newlines
     title_text = get_main_title(titles)
-    formatted_datetime = get_current_datetime()
-    titles_html = generate_titles_html(titles)
+    date_text = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
+    
+    titles_html = "<ul>\n" + "\n".join(
+        f"<li>{re.sub(r'^\\*-(.+?)-\\*$', r'\\1', t)}</li>" 
+        for t in titles
+    ) + "\n</ul>" if titles else "<p>No titles found.</p>"
 
-    # Ensure all template tags are replaced
-    final_html = template
-    if "{{content}}" in final_html:
-        final_html = final_html.replace("{{content}}", html_content)
-    if "{{date}}" in final_html:
-        final_html = final_html.replace("{{date}}", formatted_datetime)
-    if "{{titles}}" in final_html:
-        final_html = final_html.replace("{{titles}}", titles_html)
-    if "{{main_title}}" in final_html:
-        final_html = final_html.replace("{{main_title}}", title_text)
+    return (
+        template.replace("{{content}}", content)
+               .replace("{{date}}", date_text)
+               .replace("{{titles}}", titles_html)
+               .replace("{{main_title}}", title_text)
+    )
 
-    return final_html
-
-def write_output_file(html_content):
-    """Write final HTML to index.html"""
+def write_output(html):
     try:
         with open("index.html", "w", encoding="utf-8") as f:
-            f.write(html_content)
-        print("✅ index.html updated successfully!")
+            f.write(html)
+        print("✅ Successfully updated index.html")
         return True
-    except IOError as e:
-        print(f"Error writing index.html: {e}")
+    except Exception as e:
+        print(f"Error writing index.html: {e}", file=sys.stderr)
         return False
 
 def main():
-    lines = process_message_file()
-    if not lines:
-        print("❌ No content found in message.txt")
-        return
+    content, titles = generate_content()
+    if content is None:
+        print("❌ No content to build", file=sys.stderr)
+        sys.exit(1)
 
-    content_lines, titles = generate_html_content(lines)
-    final_html = build_html_template(content_lines, titles)
-    
-    if final_html and write_output_file(final_html):
-        # Verify the output
-        try:
-            with open("index.html", "r", encoding="utf-8") as f:
-                content = f.read()
-                if "{{" in content or "}}" in content:
-                    print("⚠️ Warning: Template tags remain in index.html")
-        except IOError as e:
-            print(f"Error verifying index.html: {e}")
+    html = build_html(content, titles)
+    if html is None:
+        sys.exit(1)
+
+    if not write_output(html):
+        sys.exit(1)
+
+    # Verify no template tags remain
+    with open("index.html", "r", encoding="utf-8") as f:
+        if "{{" in f.read():
+            print("❌ Template tags remain in index.html", file=sys.stderr)
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()

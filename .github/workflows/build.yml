@@ -2,7 +2,7 @@ name: Build and Deploy Retro Blog
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes (less aggressive)
+    - cron: '*/5 * * * *'  # Every 15 minutes
   push:
     branches: [ main ]
   workflow_dispatch:
@@ -17,11 +17,9 @@ jobs:
 
     env:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
-      NOTION_SHARED_SECRET: ${{ secrets.NOTION_SHARED_SECRET }}
-      NOTION_HASH: ${{ secrets.NOTION_HASH }}
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -29,46 +27,34 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  # Pinned version for consistency
-          cache: 'pip'  # Enable caching
+          python-version: '3.10'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate and build content
+      - name: Generate content
+        run: python update_message.py
+
+      - name: Build site
+        run: python build.py
+
+      - name: Verify build
         run: |
-          python update_message.py || exit 1
-          python build.py || exit 1
+          if grep -q "{{" index.html; then
+            echo "Error: Template tags remain in index.html"
+            exit 1
+          fi
 
-      - name: Validate HTML
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const html = require('fs').readFileSync('index.html', 'utf8');
-            if (!html.includes('{{content}}')) {
-              console.log('HTML validation passed');
-            } else {
-              throw new Error('Template tags not replaced in HTML');
-            }
-
-      - name: Commit and push changes
-        env:
-          TOKEN: ${{ secrets.PAT_TOKEN }}
+      - name: Commit changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
-          
-          # Only commit if there are changes
           git add .
-          if ! git diff --cached --quiet; then
-            git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M:%S')"
-            git push
-          else
-            echo "No changes to commit"
-          fi
+          git diff --quiet && git diff --cached --quiet || git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
@@ -76,8 +62,8 @@ jobs:
           path: |
             index.html
             style.css
-            assets/  # Include any other necessary files
-  
+            assets/
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
