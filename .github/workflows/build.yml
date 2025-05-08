@@ -1,6 +1,8 @@
 name: Build and Deploy Retro Blog
 
 on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
   push:
     paths:
       - "message.txt"
@@ -20,51 +22,59 @@ jobs:
       NOTION_HASH: ${{ secrets.NOTION_HASH }}
 
     steps:
-      # Checkout repo - Only necessary to get the latest template.html
       - name: Checkout repo
         uses: actions/checkout@v3
-      # Output: Successfully checked out the repository.
 
-      # Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      # Output: Python 3.x environment set up successfully.
 
-      # Install dependencies from requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      # Output: Successfully installed dependencies: requests, pytz, dotenv...
+
+      # 🔁 New step: Auto-generate new message.txt every 5 minutes
+      - name: Generate new message.txt
+        run: python update_message.py
+
+      # ✅ Commit and push updated message.txt using PAT
+      - name: Commit and push message.txt
+        env:
+          TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
+          git pull --rebase
+          git add message.txt
+          git commit -m "Auto: New message.txt from scheduler" || echo "No message.txt changes"
+          git push || echo "No changes pushed"
 
       # Run build script
       - name: Run build script
         run: python build.py
-      # Output: 
-      # ✅ Notion content verified and saved to message.txt
-      # ✅ index.html updated!
 
-      # Commit and push changes
-      - name: Commit and push changes
+      - name: Commit and push index.html
+        env:
+          TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/${{ github.repository }}
+          git pull --rebase
           git add index.html
-          git commit -m "Auto: Update index.html from message.txt" || echo "No changes to commit"
-          git push
-      # Output: Successfully committed and pushed index.html to the repository.
+          git commit -m "Auto: Update index.html from message.txt" || echo "No index.html changes"
+          git push || echo "No changes pushed"
 
-      # Upload site files as artifact
       - name: Upload site files as artifact (v4)
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
           path: |
             index.html
-            style.css  # Add other needed files here
-      # Output: Successfully uploaded artifact: github-pages (index.html, style.css).
+            style.css
 
   deploy:
     needs: build
@@ -80,5 +90,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      # Output: Successfully deployed to GitHub Pages.
-      # View the deployed site here: https://username.github.io/repo-name/
