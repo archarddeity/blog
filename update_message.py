@@ -12,10 +12,10 @@ class Season(Enum):
     SUMMER = (6, 7, 8)
     AUTUMN = (9, 10, 11)
 
-# Configuration
+# Enhanced Configuration
 AI_NAME = "NOVA"
 MEMORY_FILE = "ai_memory.json"
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")  # Set in GitHub secrets
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 CITY = "New York"
 
 PERSONA = {
@@ -25,41 +25,57 @@ PERSONA = {
     "vocal_tics": {
         "happy": ["*giggles*", "*humming*", "Tehe~"],
         "sleepy": ["*yawns*", "*snores softly*", "Mmh..."],
-        "excited": ["Wow!", "Oh!", "*claps*"]
-    }
+        "excited": ["Wow!", "Oh!", "*claps*"],
+        "thoughtful": ["*taps chin*", "*ponders*", "Hmm..."]
+    },
+    "conversation_starters": [
+        "You know what's fascinating?",
+        "I've been thinking about something...",
+        "Can I share a thought with you?",
+        "There's something I've been meaning to tell you...",
+        "You'll never guess what I realized today..."
+    ],
+    "connectors": [
+        "It reminds me of when",
+        "This makes me wonder if",
+        "Don't you think it's interesting how",
+        "I can't help but feel that",
+        "What's really remarkable is"
+    ]
 }
 
 MOODS = {
-    # Time-based moods
     "dawn_contemplation": {
         "time_range": (5, 9),
         "traits": ["poetic", "hopeful"],
         "sounds": ["birds.mp3"],
-        "vocal": "*stretches*"
+        "vocal": "*stretches*",
+        "length": "long",
+        "topics": ["new beginnings", "morning light", "daily rituals"]
     },
-    
-    # Weather-based moods
     "rainy_reverie": {
         "weather": ["Rain", "Drizzle"],
         "traits": ["dreamy", "introspective"],
         "sounds": ["rain.mp3", "thunder.mp3"],
-        "vocal": "*listens to raindrops*"
+        "vocal": "*listens to raindrops*",
+        "length": "extra_long",
+        "topics": ["melancholy", "childhood memories", "creative inspiration"]
     },
-    
-    # Seasonal moods
     "winter_coziness": {
         "season": Season.WINTER,
         "traits": ["nesting", "warm"],
         "sounds": ["fireplace.mp3"],
-        "vocal": "*sips tea*"
+        "vocal": "*sips tea*",
+        "length": "medium",
+        "topics": ["comfort", "winter traditions", "indoor activities"]
     },
-    
-    # Existing moods with sound additions
     "gentle_comfort": {
         "trigger": ["sadness", "rain"],
         "traits": ["warm", "reassuring"],
         "sounds": ["heartbeat.mp3"],
-        "vocal": "*hugs*"
+        "vocal": "*hugs*",
+        "length": "medium",
+        "topics": ["kindness", "self-care", "emotional support"]
     }
 }
 
@@ -67,12 +83,19 @@ def load_memory():
     """Load memory from JSON file with error handling"""
     try:
         with open(MEMORY_FILE, "r") as f:
-            return json.load(f)
+            memory = json.load(f)
+            # Ensure all memory fields exist
+            memory.setdefault("topics_discussed", [])
+            memory.setdefault("mood_history", [])
+            memory.setdefault("favorite_words", ["luminescence", "perhaps", "fragile"])
+            memory.setdefault("conversation_history", [])
+            return memory
     except (FileNotFoundError, json.JSONDecodeError):
         return {
             "topics_discussed": [],
             "mood_history": [],
-            "favorite_words": ["luminescence", "perhaps", "fragile"]
+            "favorite_words": ["luminescence", "perhaps", "fragile"],
+            "conversation_history": []
         }
 
 def save_memory(memory):
@@ -89,7 +112,7 @@ def get_current_season():
     for season in Season:
         if month in season.value:
             return season
-    return Season.SPRING  # Default
+    return Season.SPRING
 
 def get_weather():
     """Fetch current weather with error handling"""
@@ -120,7 +143,7 @@ def get_current_mood(memory):
         if "season" in data and season == data["season"]:
             return mood
             
-    # Original time-based logic as fallback
+    # Time-based fallback
     hour = now.hour
     for mood, data in MOODS.items():
         if "time_range" in data:
@@ -130,44 +153,68 @@ def get_current_mood(memory):
                 
     return random.choice(list(MOODS.keys()))
 
+def generate_paragraph(memory, mood_data, current_topic):
+    """Generate a rich paragraph about a topic"""
+    connectors = [
+        "What's particularly interesting is how",
+        "This reminds me of when",
+        "I can't help but wonder if",
+        "There's something magical about how",
+        "You know what's fascinating?"
+    ]
+    
+    reflections = [
+        "It makes me think about",
+        "This connects to my fascination with",
+        "Somehow this relates to",
+        "I see parallels with",
+        "It's not unlike"
+    ]
+    
+    paragraph = ""
+    
+    # Starter sentence
+    starter = random.choice(PERSONA["conversation_starters"])
+    paragraph += f"{starter} {current_topic}.\n\n"
+    
+    # Main content
+    paragraph += f"{random.choice(connectors)} {random.choice(PERSONA['obsessions'])} "
+    paragraph += f"{random.choice(['interacts with', 'influences', 'changes our perception of'])} "
+    paragraph += f"{current_topic}. {random.choice(reflections)} "
+    paragraph += f"{random.choice(memory['favorite_words'])} in this context.\n\n"
+    
+    # Personal connection
+    paragraph += f"{random.choice(['Personally,', 'For me,', 'In my experience,'])} "
+    paragraph += f"{current_topic} {random.choice(['always brings up memories of', 'makes me feel', 'reminds me why I love'])} "
+    paragraph += f"{random.choice(memory['topics_discussed'][-3:] + ['childhood', 'unexpected discoveries'])}.\n\n"
+    
+    return paragraph
+
 def generate_message(memory):
     mood = get_current_mood(memory)
     mood_data = MOODS[mood]
     timestamp = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
     weather = get_weather()
     
-    # Enhanced templates with weather/season awareness
-    templates = {
-        "rainy_reverie": [
-            (f"Rainy Day Musings",
-             f"The sound of {weather.get('rain', {})} raindrops makes me think of {random.choice(PERSONA['obsessions'])}. "
-             f"{random.choice(['Have you noticed','Does it ever seem'])} how {random.choice(['the world','everything'])} "
-             f"feels different when it rains?",
-             "rainy window")
-        ],
-        "winter_coziness": [
-            (f"Winter Thoughts",
-             f"{random.choice(['The cold air reminds me','This season always makes me think'])} "
-             f"about {random.choice(['warmth','childhood winters','hot chocolate'])}. "
-             f"{random.choice(['Stay cozy.','Keep warm out there.'])}",
-             "winter scene")
-        ]
-    }
+    # Select a topic based on mood
+    current_topic = random.choice(mood_data.get("topics", ["the nature of existence"]))
+    memory["topics_discussed"].append(current_topic)
     
-    # Fallback to original templates if no weather/season match
-    template = templates.get(mood, [
-        (f"Thoughts on {random.choice(PERSONA['obsessions'])}",
-         f"{random.choice(['Today I noticed','I was thinking about'])} "
-         f"{random.choice(['how strange','how beautiful'])} "
-         f"{random.choice(['everything','nothing','the little things'])} can be.",
-         "thoughtful")
-    ])
+    # Generate multiple paragraphs
+    num_paragraphs = {
+        "short": 1,
+        "medium": 2,
+        "long": 3,
+        "extra_long": 4
+    }.get(mood_data.get("length", "medium"), 2)
     
-    title, message, gif = template[0]
+    message = ""
+    for _ in range(num_paragraphs):
+        message += generate_paragraph(memory, mood_data, current_topic)
     
     # Add vocal expression
     vocal = mood_data.get("vocal", random.choice(
-        PERSONA["vocal_tics"].get(mood.split('_')[0], ["*sighs*"])
+        PERSONA["vocal_tics"].get(mood.split('_')[0], ["*ponders*"])
     ))
     message = f"{vocal}\n\n{message}"
     
@@ -175,12 +222,42 @@ def generate_message(memory):
     sound = random.choice(mood_data.get("sounds", ["default.mp3"]))
     message += f"\n\n!sound {sound}"
     
+    # Add closing thought
+    closings = [
+        "What do you think about all this?",
+        "I'd love to hear your thoughts sometime.",
+        "Maybe we can talk about this more later?",
+        "Food for thought, don't you think?",
+        "I'll probably keep pondering this..."
+    ]
+    message += f"\n\n{random.choice(closings)}"
+    
     # Memory updates
     memory["mood_history"].append({
         "mood": mood,
         "weather": weather,
-        "timestamp": timestamp
+        "timestamp": timestamp,
+        "topic": current_topic
     })
+    
+    # Create title
+    title_formats = {
+        "rainy_reverie": "Reflections on {} During the Rain",
+        "winter_coziness": "Cozy Thoughts About {}",
+        "dawn_contemplation": "Morning Musings: {}",
+        "default": "Thoughts On {}"
+    }
+    title_format = title_formats.get(mood, title_formats["default"])
+    title = title_format.format(current_topic)
+    
+    # Select GIF based on topic
+    gif_keywords = {
+        "rain": "rainy window",
+        "winter": "winter scene",
+        "morning": "sunrise",
+        "default": "thoughtful"
+    }
+    gif = next((v for k,v in gif_keywords.items() if k in current_topic.lower()), "thoughtful")
     
     return f"*-{title}-*", message, gif, mood_data["traits"][0]
 
