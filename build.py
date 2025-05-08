@@ -44,7 +44,10 @@ def process_message_file():
     """Read message file with error handling"""
     try:
         with open("message.txt", "r", encoding="utf-8") as f:
-            return f.readlines()
+            content = f.readlines()
+            if not content:
+                print("Warning: message.txt is empty", file=sys.stderr)
+            return content
     except FileNotFoundError:
         print("Error: message.txt not found", file=sys.stderr)
         return []
@@ -121,25 +124,41 @@ def build_html(content, titles):
 
     return (
         template.replace("{{content}}", content)
-                .replace("{{date}}", date_text)
-                .replace("{{titles}}", titles_html)
-                .replace("{{main_title}}", title_text)
+               .replace("{{date}}", date_text)
+               .replace("{{titles}}", titles_html)
+               .replace("{{main_title}}", title_text)
     )
 
 def write_output(html):
-    """Write HTML output with verification"""
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"Wrote {len(html)} bytes to index.html")
-    
-    # Verify write
-    with open("index.html", "r", encoding="utf-8") as f:
-        content = f.read()
-        if "{{" in content:
-            print("Warning: Template tags remain!")
+    """Write HTML output with validation"""
+    try:
+        # Write the file
+        with open("index.html", "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"Successfully wrote {len(html)} bytes to index.html")
+        
+        # Verify the write operation
+        with open("index.html", "r", encoding="utf-8") as f:
+            content = f.read()
+            if not content:
+                print("Error: index.html is empty after writing", file=sys.stderr)
+                return False
+                
+            if "{{" in content:
+                print("Warning: Unprocessed template tags remain in output", file=sys.stderr)
+                print("Found in content:", content[content.find("{{"):content.find("{{")+50], "...", file=sys.stderr)
+                return False
+                
+        return True
+        
+    except Exception as e:
+        print(f"Error writing index.html: {e}", file=sys.stderr)
+        return False
 
 def main():
     """Main execution function"""
+    print("\n=== Starting build process ===")
+    
     content, titles = generate_content()
     if content is None:
         print("Error: No content to build", file=sys.stderr)
@@ -149,7 +168,10 @@ def main():
     if html is None:
         sys.exit(1)
 
-    write_output(html)
+    if not write_output(html):
+        sys.exit(1)
+        
+    print("=== Build completed successfully ===\n")
 
 if __name__ == "__main__":
     main()
