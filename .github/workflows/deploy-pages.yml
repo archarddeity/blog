@@ -2,7 +2,7 @@ name: AI Automation
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Runs every 5 minutes
+    - cron: '*/5 * * * *'  # Every 5 minutes
   push:
     branches: [main]
   workflow_dispatch:
@@ -18,74 +18,47 @@ jobs:
     env:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
-    
+
     steps:
-      # 1. Checkout code
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # 2. Debug initial state
-      - name: Debug initial files
-        run: |
-          echo "=== Initial files ==="
-          ls -la
-          echo "=== message.txt ==="
-          cat message.txt || echo "No message.txt"
-          echo "=== template.html ==="
-          head -n 5 template.html || echo "No template.html"
-
-      # 3. Set up environment
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          cache: 'pip'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # 4. Generate content
       - name: Generate content
-        run: python update_message.py
-
-      # 5. Build site
-      - name: Build site
-        run: python build.py
-
-      # 6. Verify changes
-      - name: Verify changes
         run: |
-          echo "=== Current files ==="
+          pip install -r requirements.txt
+          python update_message.py
+          python build.py
+
+      - name: Verify build
+        run: |
           ls -la
-          echo "=== index.html diff ==="
-          git diff --color index.html || echo "No changes yet"
-          echo "=== index.html content ==="
-          head -n 20 index.html
+          echo "=== index.html ==="
+          head -n 15 index.html
+          if grep -q "{{" index.html; then
+            echo "Error: Template tags remain!"
+            exit 1
+          fi
 
-      # 7. Force commit changes
-      - name: Commit changes
+      - name: Create gh-pages branch
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add index.html
-          git commit -m "Auto-update: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-          git push
+          git checkout --orphan gh-pages
+          git rm -rf .
+          cp index.html style.css ./
+          [ -d assets ] && cp -r assets/ ./ || true
+          git add .
+          git commit -m "Initial gh-pages commit"
 
-      # 8. Deploy to Pages
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+      - name: Push to gh-pages
+        uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          clean: true
+          branch: gh-pages
+          force: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 9. Final verification
-      - name: Verify deployment
-        run: |
-          echo "=== Deployment verification ==="
-          echo "Pages should be available at:"
-          echo "https://${{ github.repository_owner }}.github.io/${{ github.repository }}"
+      - name: Wait for Pages deployment
+        run: sleep 120  # Give GitHub time to process
