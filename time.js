@@ -1,81 +1,172 @@
 // Ultimate Hourly Theme Engine
 const hourlyThemes = {
-    0: { // Midnight
+    0: { // Midnight (12AM-1AM)
         bg: 'linear-gradient(to bottom, #000000, #1a1a2e)',
-        text: '#e0e0ff',
-        accent: '#a0a0ff',
+        accent: '#FFF',
+        text: '#FFF',
         blendMode: 'difference',
-        label: '🌌 Midnight'
+        label: '🌌 Deep Night'
     },
-    1: {
+    1: { // 1AM-2AM
         bg: 'linear-gradient(to bottom, #0f0c29, #1d2671)',
-        text: '#d8d8ff',
-        accent: '#9494ff',
+        accent: '#FFF',
+        text: '#FFF',
         blendMode: 'exclusion',
-        label: '🌠 Late Night'
+        label: '🌠 Starlight'
     },
-    2: {
+    2: { // 2AM-3AM
         bg: 'linear-gradient(to bottom, #000428, #203a43)',
-        text: '#c8e6ff',
-        accent: '#82c4ff',
+        accent: '#FFF',
+        text: '#FFF',
         blendMode: 'luminosity',
-        label: '🌃 Night Owl'
+        label: '🌃 Late Night'
     },
-    3: {
+    3: { // 3AM-4AM
         bg: 'linear-gradient(to bottom, #0a0a0a, #2c3e50)',
-        text: '#e0f7fa',
-        accent: '#80deea',
+        accent: '#FFF',
+        text: '#FFF',
         blendMode: 'multiply',
         label: '🌑 Pre-Dawn'
     },
-    4: { // First Light
+    4: { // 4AM-5AM (First Light)
         bg: 'linear-gradient(to bottom, #1a2a6c, #b21f1f)',
-        text: '#ffecb3',
-        accent: '#ffb74d',
+        accent: '#FFF',
+        text: '#FFF',
         blendMode: 'soft-light',
         label: '🌅 First Light'
     },
-    5: { // Dawn
+    5: { // 5AM-6AM (Dawn)
         bg: 'linear-gradient(to bottom, #b21f1f, #fdbb2d)',
-        text: '#fff3e0',
-        accent: '#ffcc80',
+        accent: '#000',
+        text: '#000',
         blendMode: 'hard-light',
         label: '🌄 Dawn'
     },
-    6: { // Sunrise
+    6: { // 6AM-7AM (Sunrise)
         bg: 'linear-gradient(to bottom, #fdbb2d, #00c6fb)',
-        text: '#1a237e',
-        accent: '#534bae',
+        accent: '#000',
+        text: '#000',
         blendMode: 'overlay',
         label: '🌤 Sunrise'
     },
-    7: { // Morning
+    7: { // 7AM-8AM
         bg: 'linear-gradient(to bottom, #00c6fb, #005bea)',
-        text: '#0d47a1',
-        accent: '#5472d3',
+        accent: '#000',
+        text: '#000',
         blendMode: 'screen',
-        label: '☀️ Morning'
+        label: '☀️ Morning Light'
     },
-    12: { // Noon
+    8: { // 8AM-9AM
+        bg: 'linear-gradient(135deg, #005bea, #00d2ff)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'lighten',
+        label: '🔵 Fresh Morning'
+    },
+    9: { // 9AM-10AM
+        bg: 'radial-gradient(circle at top, #56ccf2, #2f80ed)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'color-dodge',
+        label: '💎 Crystal Hours'
+    },
+    10: { // 10AM-11AM
+        bg: 'linear-gradient(to right, #2f80ed, #56ccf2)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'soft-light',
+        label: '🌊 Late Morning'
+    },
+    11: { // 11AM-12PM
+        bg: 'conic-gradient(from 90deg, #56ccf2, #2f80ed, #56ccf2)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'hard-light',
+        label: '⏳ High Noon'
+    },
+    12: { // 12PM-1PM
         bg: 'radial-gradient(circle, #2f80ed, #56ccf2)',
-        text: '#01579b',
-        accent: '#4fc3f7',
+        accent: '#000',
+        text: '#000',
         blendMode: 'overlay',
-        label: '🔆 Noon'
+        label: '🔆 Solar Peak'
     },
-    17: { // Sunset
+    13: { // 1PM-2PM
+        bg: 'linear-gradient(to bottom, #56ccf2, #2f80ed)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'screen',
+        label: '🏙 Afternoon Start'
+    },
+    14: { // 2PM-3PM
+        bg: 'linear-gradient(to bottom, #f46b45, #eea849)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'multiply',
+        label: '🟠 Golden Hours'
+    },
+    15: { // 3PM-4PM
+        bg: 'linear-gradient(135deg, #eea849, #f46b45)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'color-burn',
+        label: '🧡 Late Golden'
+    },
+    16: { // 4PM-5PM
+        bg: 'linear-gradient(to bottom, #f12711, #f5af19)',
+        accent: '#000',
+        text: '#000',
+        blendMode: 'darken',
+        label: '🔶 Pre-Sunset'
+    },
+    17: { // 5PM-6PM (Sunset)
         bg: 'linear-gradient(to bottom, #f5af19, #f12711)',
-        text: '#3e2723',
-        accent: '#d84315',
+        accent: '#000',
+        text: '#000',
         blendMode: 'color-dodge',
         label: '🌇 Sunset'
     },
-    21: { // Evening
+    18: { // 6PM-7PM
+        bg: 'linear-gradient(to bottom, #f12711, #0f2027)',
+        accent: '#FFF',
+        text: '#FFF',
+        blendMode: 'exclusion',
+        label: '🌆 Dusk'
+    },
+    19: { // 7PM-8PM
+        bg: 'linear-gradient(to bottom, #0f2027, #203a43)',
+        accent: '#FFF',
+        text: '#FFF',
+        blendMode: 'luminosity',
+        label: '🌃 Early Night'
+    },
+    20: { // 8PM-9PM
+        bg: 'linear-gradient(135deg, #203a43, #2c5364)',
+        accent: '#FFF',
+        text: '#FFF',
+        blendMode: 'soft-light',
+        label: '🌉 City Lights'
+    },
+    21: { // 9PM-10PM
         bg: 'linear-gradient(to bottom, #2c5364, #0f0c29)',
-        text: '#bbdefb',
-        accent: '#64b5f6',
+        accent: '#FFF',
+        text: '#FFF',
         blendMode: 'hard-light',
-        label: '🌃 Evening'
+        label: '🌠 Evening Glow'
+    },
+    22: { // 10PM-11PM
+        bg: 'linear-gradient(to bottom, #0f0c29, #000428)',
+        accent: '#FFF',
+        text: '#FFF',
+        blendMode: 'difference',
+        label: '🌌 Late Evening'
+    },
+    23: { // 11PM-12AM
+        bg: 'linear-gradient(to bottom, #000428, #000000)',
+        accent: '#FFF',
+        text: '#FFF',
+        blendMode: 'exclusion',
+        label: '🌑 Midnight Approach'
     }
 };
 
