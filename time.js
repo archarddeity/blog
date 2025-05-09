@@ -183,7 +183,7 @@ function applyTheme(theme) {
     const rgbText = hexToRgb(theme.text);
     
     // Background
-    document.body.style.backgroundImage = `${theme.bg}, url("https://picsum.photos/800/600?grayscale&rart=${Math.random()}")`;
+    document.body.style.backgroundImage = `${theme.bg}, url("https://picsum.photos/800/600?random&rart=${Math.random()}")`;
     document.body.style.backgroundBlendMode = `${theme.blendMode}, overlay`;
     
     // CSS Variables
