@@ -35,21 +35,29 @@ jobs:
 
       - name: Generate content
         run: |
-          # Force overwrite message.txt
+          # Store previous message for comparison
+          if [ -f "message.txt" ]; then
+            cp message.txt message_old.txt
+          fi
+          
+          # Generate new message
           python update_message.py
           
-          # Verify update
+          # Verify update occurred
           if [ ! -f "message.txt" ]; then
             echo "❌ Error: message.txt not created"
             exit 1
           fi
           
-          # Check if content changed
-          if git diff --quiet message.txt; then
-            echo "⚠️ Warning: message.txt content not updated"
-          else
-            echo "✅ message.txt successfully updated"
+          # Check if content actually changed
+          if [ -f "message_old.txt" ] && diff -q message_old.txt message.txt >/dev/null; then
+            echo "⚠️ Warning: message.txt content identical to previous version"
+            # Force a change by adding timestamp
+            echo "# Updated at $(date)" >> message.txt
           fi
+          
+          echo "✅ message.txt content:"
+          cat message.txt
 
       - name: Build website
         run: |
@@ -75,11 +83,8 @@ jobs:
             *.py
             requirements.txt
 
-      - name: Verify changes
+      - name: Final verification
         run: |
-          echo "🔄 Last update: $(date)"
-          echo "📝 Current message:"
+          echo "🔄 Last update completed at $(date)"
+          echo "📝 Current message head:"
           head -n 5 message.txt
-          echo ""
-          echo "🌐 Deployed files:"
-          ls -la index.html style.css
