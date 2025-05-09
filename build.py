@@ -79,7 +79,7 @@ def build_html(content, titles):
     
     replacements = {
         "{{content}}": content or "<p>No content</p>",
-        "{{date}}": datetime.now().astimezone().strftime("%B %d, %Y — %I:%M %p"),
+        "{{date}}": '<span id="local-time">Loading local time…</span>',
         "{{titles}}": "\n".join(["<li>{}</li>".format(re.sub(r"^\*-(.+?)-\*$", r"\1", t)) for t in titles]) if titles else "",
         "{{main_title}}": re.sub(r"^\*-(.+?)-\*$", r"\1", titles[0]) if titles else "NOVA's Thoughts"
     }
