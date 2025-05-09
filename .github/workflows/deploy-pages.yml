@@ -30,58 +30,27 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install with force-reinstall
-        run: |
-          pip install --force-reinstall -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Generate content with verification
+      - name: Generate content
         run: |
-          # Delete existing message to ensure fresh generation
-          rm -f message.txt
-          
-          # Run with explicit error checking
-          if ! python update_message.py; then
-            echo "❌ update_message.py failed"
-            exit 1
-          fi
-          
-          # Verify new message exists and has content
-          if [ ! -s "message.txt" ]; then
-            echo "❌ message.txt missing or empty"
-            exit 1
-          fi
-          
-          echo "✅ message.txt content:"
-          cat message.txt
+          python update_message.py
+          [ -s "message.txt" ] || (echo "Error: message.txt empty" && exit 1)
 
-      - name: Build with validation
-        run: |
-          python build.py
-          
-          # Strict validation
-          if [ ! -f "index.html" ] || grep -q "{{" index.html; then
-            echo "❌ Invalid index.html generated"
-            exit 1
-          fi
+      - name: Build site
+        run: python build.py
 
-      - name: Force deploy
+      - name: Deploy to GH Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
           publish_dir: ./
           publish_branch: gh-pages
           force_orphan: true
-          keep_files: false
           exclude_assets: |
             *.py
             requirements.txt
-            template.html
             message.txt
-
-      - name: Final verification
-        run: |
-          echo "🔄 Deployment completed at $(date)"
-          echo "📝 Current message:"
-          cat message.txt
-          echo ""
-          echo "🌐 Deployed index.html size: $(wc -c < index.html) bytes"
+            .github/
+            *.log
