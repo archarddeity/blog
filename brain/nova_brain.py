@@ -82,7 +82,7 @@ class NOVABrain:
         gif = get_gif(self.current_mood)
 
         message = f"*-NOVA's {self.current_mood.capitalize()} State-*\n"
-        message += f"{thought}{extension}\n\n"
+        message += f"{thought} {extension}\n\n"
         message += f"!gif {gif}\n\n"
         message += f"!cmt-Generated at {timestamp} in {self.timezone.tzname(None)}-!"
         
