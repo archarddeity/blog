@@ -16,7 +16,7 @@ jobs:
       id-token: write
 
     env:
-      TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}  # Only using your available tokens
+      TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -35,37 +35,54 @@ jobs:
 
       - name: Generate content
         run: |
+          # Generate fresh message
           python update_message.py
-          # Basic quality check
-          if [ ! -s "message.txt" ]; then
-            echo "Error: Empty message.txt"
+          
+          # Verify message was created
+          if [ ! -f "message.txt" ]; then
+            echo "❌ Error: message.txt not generated"
+            exit 1
+          fi
+          
+          # Check minimum length (3 lines: title, content, gif)
+          if [ $(wc -l < message.txt) -lt 3 ]; then
+            echo "❌ Error: message.txt too short"
             exit 1
           fi
 
       - name: Build website
         run: |
+          # Generate index.html
           python build.py
-          # Verify essential files exist
-          ls -la
-          [ -f index.html ] || exit 1
-          [ -f style.css ] || exit 1
+          
+          # Verify build outputs
+          if [ ! -f "index.html" ] || [ ! -f "style.css" ]; then
+            echo "❌ Error: Missing build files"
+            exit 1
+          fi
+          
+          # Check HTML contains actual content
+          if grep -q "{{content}}" index.html; then
+            echo "❌ Error: Template tags not processed"
+            exit 1
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.PAT_TOKEN }}  # Using your PAT token here
+          github_token: ${{ secrets.PAT_TOKEN }}
           publish_dir: ./
           publish_branch: gh-pages
+          force_orphan: true  # Ensures clean deployment
           keep_files: false
           exclude_assets: |
             message.txt
             template.html
-            build.py
-            update_message.py
+            *.py
             requirements.txt
 
       - name: Verify deployment
         run: |
-          echo "Deployed at $(date)"
-          echo "Message preview:"
-          head -n 3 message.txt
+          echo "✅ Deployment successful at $(date +'%Y-%m-%d %H:%M:%S')"
+          echo "Latest message snippet:"
+          grep -v "!cmt" message.txt | head -n 5
