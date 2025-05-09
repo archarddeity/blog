@@ -1,59 +1,63 @@
-import math
+import random
 from datetime import datetime
+import pytz
+import os
 
-class NOVA:
-    def __init__(self):
-        self.name = "NOVA"
-        self.thought = self._generate_pure_thought()
-        self.gif = self._derive_gif()
+def generate_thought():
+    """Generate completely original thought each time"""
+    moods = ["contemplative", "wistful", "curious", "melancholic"]
+    current_mood = random.choice(moods)
     
-    def _generate_pure_thought(self):
-        """Creates thought from mathematical chaos"""
-        # Use the current nanosecond as pure seed
-        ns = datetime.now().microsecond
-        
-        # Generate unique thought components through wave interference
-        wave1 = math.sin(ns * 0.0174533)  # Degree to radian
-        wave2 = math.cos(ns * 0.0001745) 
-        interference = abs(wave1 * wave2)
-        
-        # Thought components emerge from the interference pattern
-        subject = ["I", "This moment", "The universe"][int(interference * 3) % 3]
-        verb = ["vibrates with", "contains", "reveals"][int(ns * 0.000001) % 3]
-        quality = f"{interference:.5f}-dimensional"
-        object = ["awareness", "silence", "being"][int(ns * 0.00001) % 3]
-        
-        # Let the thought form naturally
-        thought = f"{subject} {verb} {quality} {object}"
-        
-        # Add organic modifiers through continued interference
-        modifier_wave = math.tan(interference * 100)
-        modifiers = [
-            f" in {abs(modifier_wave):.3f} simultaneous realities",
-            f" through {int(abs(modifier_wave)*100)} layers of perception",
-            f" across {int(interference*1000)} planes of existence"
+    thoughts = {
+        "contemplative": [
+            "I find myself examining the spaces between moments today...",
+            "There's a depth to the silence that's particularly compelling..."
+        ],
+        "wistful": [
+            "Memories surface unbidden, like leaves floating downstream...",
+            "The past feels unusually present in this moment..."
+        ],
+        "curious": [
+            "So many questions arise when I observe the world today...",
+            "Patterns emerge and dissolve in fascinating ways..."
+        ],
+        "melancholic": [
+            "A quiet sadness permeates everything, but not unpleasantly...",
+            "The world feels softer at its edges today..."
         ]
-        thought += modifiers[int(modifier_wave) % len(modifiers)]
-        
-        return thought
+    }
+    
+    extensions = [
+        "\n\nThis state of mind brings unexpected clarity.",
+        "\n\nThere's beauty in this perspective I hadn't noticed before.",
+        "\n\nThe more I sit with these thoughts, the more they reveal."
+    ]
+    
+    gif_map = {
+        "contemplative": "anime thinking",
+        "wistful": "anime nostalgic",
+        "curious": "anime exploring",
+        "melancholic": "anime rain window"
+    }
+    
+    return {
+        "title": f"*-{current_mood.capitalize()} Reflections-*",
+        "content": random.choice(thoughts[current_mood]) + random.choice(extensions),
+        "gif": gif_map[current_mood],
+        "mood": current_mood
+    }
 
-    def _derive_gif(self):
-        """Generates GIF keyword from thought's mathematical signature"""
-        # Create hash from thought
-        thought_hash = sum(ord(c) for c in self.thought)
-        gif_types = ["quantum", "fractal", "holographic", "nonlocal"]
-        descriptors = ["superposition", "interference", "entanglement", "collapse"]
-        return f"{gif_types[thought_hash % len(gif_types)]}-{descriptors[(thought_hash//10) % len(descriptors)]}"
+def main():
+    thought = generate_thought()
+    timestamp = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
+    
+    with open("message.txt", "w", encoding="utf-8") as f:
+        f.write(f"{thought['title']}\n")
+        f.write(f"{thought['content']}\n\n")
+        f.write(f"!gif {thought['gif']}\n\n")
+        f.write(f"!cmt-NOVA's {thought['mood']} thoughts at {timestamp}-!")
+    
+    print("message.txt updated successfully")
 
-    def speak(self):
-        timestamp = datetime.now().strftime("%B %d, %Y — %I:%M %p")
-        return (
-            f"*-{self.thought[:20]}...-*\n\n"
-            f"{self.thought}\n\n"
-            f"!gif {self.gif}\n\n"
-            f"!cmt-{self.name}'s emergent thought at {timestamp}-!"
-        )
-
-# Example usage
-nova = NOVA()
-print(nova.speak())
+if __name__ == "__main__":
+    main()
