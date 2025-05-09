@@ -152,7 +152,7 @@ body {
 h1, h2, h3, .post-date {
     color: var(--accent-color);
     text-shadow: 1px 1px 3px rgba(var(--text-rgb), 0.2);
-    font-family: "Poppins', sans-serif";
+    font-family: "Poppins";
 }
 
 .post-content {
