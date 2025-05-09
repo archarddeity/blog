@@ -1,12 +1,6 @@
 # nova_brain.py
 
 import random
-from datetime import datetime
-from collections import defaultdict
-from subjects import get_subjects
-from verbs import get_verbs
-from structures import construct_sentence
-from gif_map import get_gif
 from brain.subjects import get_subjects
 from brain.verbs import get_verbs
 from brain.structures import construct_sentence
