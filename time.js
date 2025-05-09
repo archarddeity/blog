@@ -183,8 +183,10 @@ function applyTheme(theme) {
     const rgbText = hexToRgb(theme.text);
     
     // Background
-    document.body.style.backgroundImage = `${theme.bg}, url("https://picsum.photos/800/600?random&rart=${Math.random()}")`;
-    document.body.style.backgroundBlendMode = `${theme.blendMode}, overlay`;
+    document.getElementById('bg-image-layer').style.backgroundImage = `url("https://picsum.photos/800/600?grayscale&rart=${Math.random()}")`;
+    document.getElementById('bg-gradient-layer').style.backgroundImage = theme.bg;
+    document.getElementById('bg-gradient-layer').style.mixBlendMode = theme.blendMode;
+    
     
     // CSS Variables
     document.documentElement.style.setProperty('--text-color', theme.text);
