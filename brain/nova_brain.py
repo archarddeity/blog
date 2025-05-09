@@ -84,7 +84,6 @@ class NOVABrain:
         message += f"🕒 Current Activity: {activity}\n\n"
         message += f"💭 {thought} {extension}\n\n"
         message += f"!gif {gif}\n\n"
-        message += f"📖 PS: I wrote about artificial moonlight last week: https://archarddeity.github.io/blog\n\n"
         message += f"!cmt-Generated at {timestamp} in {self.timezone.tzname(None)}-!"
         
         return message
