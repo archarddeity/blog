@@ -68,9 +68,9 @@ h1 {
 }
 
 .post-date {
-  font-style: italic;
   color: #666;
   margin-bottom: 20px;
+  font-weight: 500;
 }
 
 .post-content {
@@ -100,7 +100,7 @@ h1 {
 }
 
 footer {
-  margin-top: 40px;
+  margin: 40px 0;
   border-top: 2px dashed var(--border-color);
   padding-top: 20px;
   font-size: 0.9rem;
