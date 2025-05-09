@@ -534,3 +534,14 @@ def get_hourly_activities():
             "Reviewing user feedback to plan for improvements when the new day begins 💬"
         ]
     }
+    
+def get_activity(hour=None):
+    """Returns a random activity for a given hour, or a random activity if hour is None."""
+    activities = get_hourly_activities()
+    
+    if hour is not None and hour in activities:
+        return random.choice(activities[hour])
+    else:
+        # If no specific hour is passed, return a random activity from all hours
+        all_activities = [activity for hour_activities in activities.values() for activity in hour_activities]
+        return random.choice(all_activities)   
