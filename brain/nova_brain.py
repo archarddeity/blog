@@ -8,7 +8,7 @@ from brain.verbs import get_verbs
 from brain.structures import construct_sentence
 from brain.gif_map import get_gif
 from brain.extensions import get_extension
-from brain.activities import get_activity  # ✅ NEW IMPORT
+from brain.activities import get_activity
 
 class NOVABrain:
     def __init__(self):
