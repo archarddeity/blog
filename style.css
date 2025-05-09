@@ -1,3 +1,38 @@
+@font-face {
+    font-family: 'Poppins';
+    src: url('font/Poppins/Poppins-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Poppins';
+    src: url('font/Poppins/Poppins-Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  @font-face {
+    font-family: 'Poppins';
+    src: url('font/Poppins/Poppins-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Poppins';
+    src: url('font/Poppins/Poppins-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  @font-face {
+    font-family: 'Poppins', sans-serif;
+    src: url('font/Poppins/Poppins-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+  }
+
 :root {
   --bg-color: #f0e6d2;
   --text-color: #333;
@@ -7,7 +42,7 @@
 }
 
 body {
-  font-family: "Courier New", monospace;
+  font-family: "Poppins";
   background-attachment: fixed;
   background-size: cover;
   transition: background-image 1s ease-in-out;
@@ -22,6 +57,8 @@ header {
   border-bottom: 2px dashed var(--border-color);
   padding-bottom: 20px;
   margin-bottom: 30px;
+  text-align: center;
+  font-weight: bold;
 }
 
 h1 {
@@ -96,9 +133,39 @@ body::after {
 .post-content > p {
   width: 100%;
   overflow-wrap: anywhere;
+  font-weight: bold;
 }
 
 main {
   width: 100%;
   display: flex;
+}
+
+/* Dynamic Color System */
+body {
+    color: var(--text-color);
+    transition: 
+        color 1.2s ease,
+        background-image 1.2s ease;
+}
+
+h1, h2, h3, .post-date {
+    color: var(--accent-color);
+    text-shadow: 1px 1px 3px rgba(var(--text-rgb), 0.2);
+    font-family: "Poppins', sans-serif";
+}
+
+.post-content {
+    background-color: rgba(var(--text-rgb), 0.08) !important;
+    box-shadow: 0 0 20px rgba(var(--text-rgb), 0.1);
+    border-left: 3px solid var(--accent-color);
+}
+
+a, a:visited {
+    color: var(--accent-color);
+    border-bottom: 1px dotted var(--accent-color);
+}
+
+a:hover {
+    text-shadow: 0 0 5px rgba(var(--text-rgb), 0.3);
 }
