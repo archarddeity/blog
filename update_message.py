@@ -108,7 +108,7 @@ def main():
             f.write(f"*-NOVA's {nova.current_mood.capitalize()} State-*\n")
             f.write(f"{thought}{extension}\n\n")
             f.write(f"!gif {gif_map[nova.current_mood]}\n\n")
-            f.write(f"!cmt-Generated at {timestamp} in {nova.timezone.zone}-!")
+            f.write(f"!cmt-Generated at {timestamp} in {nova.timezone.tzname(None)}-!")
             
         print("NOVA's thoughts successfully recorded")
         sys.exit(0)
