@@ -1,11 +1,12 @@
 # nova_brain.py
-import pytz
 import random
+import pytz
+from datetime import datetime
+from collections import defaultdict
 from brain.subjects import get_subjects
 from brain.verbs import get_verbs
 from brain.structures import construct_sentence
 from brain.gif_map import get_gif
-
 
 class NOVABrain:
     def __init__(self):
