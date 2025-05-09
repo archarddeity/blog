@@ -2,7 +2,7 @@ name: AI Automation
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: '*/5 * * * *'
   push:
     branches: [main]
   workflow_dispatch:
@@ -19,57 +19,52 @@ jobs:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout with forced clean
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          clean: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install with force-reinstall
         run: |
-          pip install -r requirements.txt
+          pip install --force-reinstall -r requirements.txt
 
-      - name: Generate content
+      - name: Generate content with verification
         run: |
-          # Store previous message for comparison
-          if [ -f "message.txt" ]; then
-            cp message.txt message_old.txt
-          fi
+          # Delete existing message to ensure fresh generation
+          rm -f message.txt
           
-          # Generate new message
-          python update_message.py
-          
-          # Verify update occurred
-          if [ ! -f "message.txt" ]; then
-            echo "❌ Error: message.txt not created"
+          # Run with explicit error checking
+          if ! python update_message.py; then
+            echo "❌ update_message.py failed"
             exit 1
           fi
           
-          # Check if content actually changed
-          if [ -f "message_old.txt" ] && diff -q message_old.txt message.txt >/dev/null; then
-            echo "⚠️ Warning: message.txt content identical to previous version"
-            # Force a change by adding timestamp
-            echo "# Updated at $(date)" >> message.txt
+          # Verify new message exists and has content
+          if [ ! -s "message.txt" ]; then
+            echo "❌ message.txt missing or empty"
+            exit 1
           fi
           
           echo "✅ message.txt content:"
           cat message.txt
 
-      - name: Build website
+      - name: Build with validation
         run: |
           python build.py
           
-          # Verify build outputs
-          if [ ! -f "index.html" ] || [ ! -f "style.css" ]; then
-            echo "❌ Error: Build failed - missing files"
+          # Strict validation
+          if [ ! -f "index.html" ] || grep -q "{{" index.html; then
+            echo "❌ Invalid index.html generated"
             exit 1
           fi
 
-      - name: Deploy to GitHub Pages
+      - name: Force deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
@@ -78,13 +73,15 @@ jobs:
           force_orphan: true
           keep_files: false
           exclude_assets: |
-            message.txt
-            template.html
             *.py
             requirements.txt
+            template.html
+            message.txt
 
       - name: Final verification
         run: |
-          echo "🔄 Last update completed at $(date)"
-          echo "📝 Current message head:"
-          head -n 5 message.txt
+          echo "🔄 Deployment completed at $(date)"
+          echo "📝 Current message:"
+          cat message.txt
+          echo ""
+          echo "🌐 Deployed index.html size: $(wc -c < index.html) bytes"
