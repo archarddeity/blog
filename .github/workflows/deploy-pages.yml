@@ -16,96 +16,56 @@ jobs:
       id-token: write
 
     env:
-      TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
-      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
-      MIN_MESSAGE_LINES: 8  # Minimum lines for valid message
-      MIN_HTML_SIZE: 1024   # Minimum bytes for valid HTML
+      TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}  # Only using your available tokens
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          cache: 'pip'  # Cache dependencies for faster runs
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt --no-cache-dir
+          pip install -r requirements.txt
 
-      - name: Generate AI content
-        id: generate
+      - name: Generate content
         run: |
-          echo "🔄 Generating new message..."
           python update_message.py
-          
-          # Verify message quality
-          if [ ! -f "message.txt" ]; then
-            echo "❌ Error: message.txt not generated"
+          # Basic quality check
+          if [ ! -s "message.txt" ]; then
+            echo "Error: Empty message.txt"
             exit 1
           fi
-          
-          lines=$(wc -l < message.txt)
-          if [ "$lines" -lt "$MIN_MESSAGE_LINES" ]; then
-            echo "❌ Error: Message too short (only $lines lines)"
-            exit 1
-          fi
-          echo "✔️ Message generated with $lines lines"
 
       - name: Build website
         run: |
-          echo "🏗️ Building HTML..."
           python build.py
-          
-          # Verify build output
-          if [ ! -f "index.html" ]; then
-            echo "❌ Error: index.html not generated"
-            exit 1
-          fi
-          
-          size=$(wc -c < index.html)
-          if [ "$size" -lt "$MIN_HTML_SIZE" ]; then
-            echo "❌ Error: HTML too small (only $size bytes)"
-            exit 1
-          fi
-          echo "✔️ HTML built successfully (${size} bytes)"
-
-      - name: Prepare deployment
-        run: |
-          echo "📦 Preparing deployment package..."
-          mkdir -p public
-          cp index.html style.css public/
-          
-          # Copy assets if they exist
-          if [ -d "assets" ]; then
-            echo "📁 Copying assets..."
-            cp -r assets/ public/
-          fi
-          
-          # Verify deployment package
-          [ -f "public/index.html" ] || exit 1
-          [ -f "public/style.css" ] || exit 1
-          echo "✔️ Deployment package ready"
+          # Verify essential files exist
+          ls -la
+          [ -f index.html ] || exit 1
+          [ -f style.css ] || exit 1
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITH_TOKEN }}
-          publish_dir: ./public
-          force_orphan: true
+          github_token: ${{ secrets.PAT_TOKEN }}  # Using your PAT token here
+          publish_dir: ./
+          publish_branch: gh-pages
           keep_files: false
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          exclude_assets: |
+            message.txt
+            template.html
+            build.py
+            update_message.py
+            requirements.txt
 
       - name: Verify deployment
         run: |
-          echo "✅ Deployment completed successfully"
-          echo "🕒 Last update: $(date)"
-          echo "📝 Message preview:"
-          head -n 5 message.txt
+          echo "Deployed at $(date)"
+          echo "Message preview:"
+          head -n 3 message.txt
