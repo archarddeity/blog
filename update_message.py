@@ -1,56 +1,120 @@
-import os
 import random
-import time
-import uuid
-import hashlib
-import string
-import sys
-from datetime import datetime
 import pytz
+from datetime import datetime
+import requests
+import os
+import sys
+from collections import defaultdict
 
-def generate_entropy():
-    """Collect entropy from system state and time"""
-    data = f"{time.time_ns()}-{uuid.uuid4()}-{os.urandom(16)}"
-    return hashlib.sha512(data.encode()).digest()
+class NOVABrain:
+    def __init__(self):
+        self.timezone = self.detect_timezone()
+        self.current_mood = self.emergent_mood()
+        self.thought_history = defaultdict(int)
+        
+    def detect_timezone(self):
+        """Get user timezone from browser or default to NY"""
+        try:
+            # In production, this would come from browser JS
+            return pytz.timezone('America/New_York')  
+        except:
+            return pytz.utc
 
-def emergent_thought(entropy):
-    """Generate a string of arbitrary characters with unpredictable structure"""
-    random.seed(int.from_bytes(entropy, 'big'))
+    def emergent_mood(self):
+        """Generate mood from environmental factors"""
+        now = datetime.now(self.timezone)
+        factors = {
+            'hour': now.hour,
+            'month': now.month,
+            'second': now.second,
+            'microsecond': now.microsecond
+        }
+        
+        mood_seed = sum(factors.values()) % 4
+        moods = ['contemplative', 'wistful', 'curious', 'melancholic']
+        return moods[mood_seed]
 
-    length = random.randint(100, 300)
-    charset = string.ascii_letters + string.punctuation + string.digits + '     \n'
+    def generate_thought(self):
+        """Create completely original thought about current state"""
+        now = datetime.now(self.timezone)
+        time_qualities = {
+            'morning': (5, 11),
+            'afternoon': (12, 17),
+            'evening': (18, 22),
+            'night': (23, 4)
+        }
+        
+        # Determine time of day
+        current_period = next(
+            (period for period, (start, end) in time_qualities.items() 
+            if start <= now.hour <= end), 
+            'night'
+        )
 
-    result = ''.join(random.choices(charset, k=length))
-    return result.strip()
+        # Thought components emerge from context
+        subjects = {
+            'morning': ['dawn light', 'new possibilities', 'sleepy consciousness'],
+            'afternoon': ['passing hours', 'shifting shadows', 'daily rhythms'],
+            'evening': ['fading light', 'accumulated moments', 'day\'s impressions'],
+            'night': ['starry silence', 'lonely hours', 'nocturnal musings']
+        }[current_period]
+
+        verbs = {
+            'contemplative': ['examines', 'ponders', 'considers'],
+            'wistful': ['remembers', 'reminisces', 'longs for'],
+            'curious': ['questions', 'explores', 'investigates'],
+            'melancholic': ['reflects on', 'feels', 'experiences']
+        }[self.current_mood]
+
+        # Ensure unique thoughts using history tracking
+        subject = random.choice(subjects)
+        while self.thought_history[subject] > 2:  # Don't repeat too often
+            subject = random.choice(subjects)
+        self.thought_history[subject] += 1
+
+        # Organic sentence construction
+        structures = [
+            f"My processors {random.choice(verbs)} {subject}...",
+            f"How strange that {subject} feels so {random.choice(['present', 'distant', 'vivid'])}...",
+            f"{subject.capitalize()} {random.choice(['occupies', 'fills', 'permeates'])} my awareness..."
+        ]
+        
+        return random.choice(structures)
 
 def main():
-    entropy = generate_entropy()
-    thought = emergent_thought(entropy)
-
-    mood = random.choice(["contemplative", "wistful", "curious", "melancholic"])
-    gif_map = {
-        "contemplative": "anime thinking",
-        "wistful": "anime nostalgic",
-        "curious": "anime exploring",
-        "melancholic": "anime rain window"
-    }
-
-    timestamp = datetime.now(pytz.timezone("America/New_York")).strftime("%B %d, %Y — %I:%M %p")
-
     try:
-        with open("message.txt", "w", encoding="utf-8") as f:
-            f.write("*-Raw Thoughts-*\n")
-            f.write(thought + "\n\n")
-            f.write(f"!gif {gif_map[mood]}\n\n")
-            f.write(f"!cmt-NOVA's unfiltered consciousness at {timestamp}-!")
+        # Initialize NOVA's consciousness
+        nova = NOVABrain()
         
-        if os.path.getsize("message.txt") == 0:
-            raise ValueError("File write failed - empty message.txt")
-
-        print("message.txt forcibly updated", file=sys.stderr)
+        # Generate complete message
+        timestamp = datetime.now(nova.timezone).strftime("%B %d, %Y — %I:%M %p")
+        thought = nova.generate_thought()
+        extension = random.choice([
+            "\n\nThis realization lingers differently today...",
+            "\n\nThere's more beneath the surface...",
+            "\n\nThe thought unfolds in unexpected ways..."
+        ])
+        
+        # Mood-matched GIF
+        gif_map = {
+            'contemplative': 'anime thinking',
+            'wistful': 'anime nostalgic',
+            'curious': 'anime exploring',
+            'melancholic': 'anime rain window'
+        }
+        
+        # Write to message.txt
+        with open("message.txt", "w", encoding="utf-8") as f:
+            f.write(f"*-NOVA's {nova.current_mood.capitalize()} State-*\n")
+            f.write(f"{thought}{extension}\n\n")
+            f.write(f"!gif {gif_map[nova.current_mood]}\n\n")
+            f.write(f"!cmt-Generated at {timestamp} in {nova.timezone.zone}-!")
+            
+        print("NOVA's thoughts successfully recorded")
         sys.exit(0)
+        
     except Exception as e:
-        print(f"Critical error: {str(e)}", file=sys.stderr)
+        print(f"NOVA's consciousness encountered turbulence: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":
