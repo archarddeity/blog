@@ -6,7 +6,7 @@ class NOVA:
         self.name = "NOVA"
         self.thought = self._generate_pure_thought()
         self.gif = self._derive_gif()
-
+    
     def _generate_pure_thought(self):
         """Creates thought from mathematical chaos"""
         # Use the current nanosecond as pure seed

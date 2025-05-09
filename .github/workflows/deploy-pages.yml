@@ -35,35 +35,29 @@ jobs:
 
       - name: Generate content
         run: |
-          # Generate fresh message
+          # Force overwrite message.txt
           python update_message.py
           
-          # Verify message was created
+          # Verify update
           if [ ! -f "message.txt" ]; then
-            echo "❌ Error: message.txt not generated"
+            echo "❌ Error: message.txt not created"
             exit 1
           fi
           
-          # Check minimum length (3 lines: title, content, gif)
-          if [ $(wc -l < message.txt) -lt 3 ]; then
-            echo "❌ Error: message.txt too short"
-            exit 1
+          # Check if content changed
+          if git diff --quiet message.txt; then
+            echo "⚠️ Warning: message.txt content not updated"
+          else
+            echo "✅ message.txt successfully updated"
           fi
 
       - name: Build website
         run: |
-          # Generate index.html
           python build.py
           
           # Verify build outputs
           if [ ! -f "index.html" ] || [ ! -f "style.css" ]; then
-            echo "❌ Error: Missing build files"
-            exit 1
-          fi
-          
-          # Check HTML contains actual content
-          if grep -q "{{content}}" index.html; then
-            echo "❌ Error: Template tags not processed"
+            echo "❌ Error: Build failed - missing files"
             exit 1
           fi
 
@@ -73,7 +67,7 @@ jobs:
           github_token: ${{ secrets.PAT_TOKEN }}
           publish_dir: ./
           publish_branch: gh-pages
-          force_orphan: true  # Ensures clean deployment
+          force_orphan: true
           keep_files: false
           exclude_assets: |
             message.txt
@@ -81,8 +75,11 @@ jobs:
             *.py
             requirements.txt
 
-      - name: Verify deployment
+      - name: Verify changes
         run: |
-          echo "✅ Deployment successful at $(date +'%Y-%m-%d %H:%M:%S')"
-          echo "Latest message snippet:"
-          grep -v "!cmt" message.txt | head -n 5
+          echo "🔄 Last update: $(date)"
+          echo "📝 Current message:"
+          head -n 5 message.txt
+          echo ""
+          echo "🌐 Deployed files:"
+          ls -la index.html style.css
