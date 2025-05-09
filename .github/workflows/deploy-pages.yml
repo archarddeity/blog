@@ -18,40 +18,94 @@ jobs:
     env:
       TENOR_API_KEY: ${{ secrets.TENOR_API_KEY }}
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+      MIN_MESSAGE_LINES: 8  # Minimum lines for valid message
+      MIN_HTML_SIZE: 1024   # Minimum bytes for valid HTML
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip'  # Cache dependencies for faster runs
 
-      - name: Generate content
+      - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install --upgrade pip
+          pip install -r requirements.txt --no-cache-dir
+
+      - name: Generate AI content
+        id: generate
+        run: |
+          echo "🔄 Generating new message..."
           python update_message.py
-          python build.py
+          
+          # Verify message quality
+          if [ ! -f "message.txt" ]; then
+            echo "❌ Error: message.txt not generated"
+            exit 1
+          fi
+          
+          lines=$(wc -l < message.txt)
+          if [ "$lines" -lt "$MIN_MESSAGE_LINES" ]; then
+            echo "❌ Error: Message too short (only $lines lines)"
+            exit 1
+          fi
+          echo "✔️ Message generated with $lines lines"
 
-      - name: Verify build
+      - name: Build website
         run: |
-          ls -la
-          [ -f index.html ] || exit 1
-          [ -f style.css ] || exit 1
+          echo "🏗️ Building HTML..."
+          python build.py
+          
+          # Verify build output
+          if [ ! -f "index.html" ]; then
+            echo "❌ Error: index.html not generated"
+            exit 1
+          fi
+          
+          size=$(wc -c < index.html)
+          if [ "$size" -lt "$MIN_HTML_SIZE" ]; then
+            echo "❌ Error: HTML too small (only $size bytes)"
+            exit 1
+          fi
+          echo "✔️ HTML built successfully (${size} bytes)"
 
       - name: Prepare deployment
         run: |
+          echo "📦 Preparing deployment package..."
           mkdir -p public
           cp index.html style.css public/
-          [ -d assets ] && cp -r assets/ public/ || true
+          
+          # Copy assets if they exist
+          if [ -d "assets" ]; then
+            echo "📁 Copying assets..."
+            cp -r assets/ public/
+          fi
+          
+          # Verify deployment package
+          [ -f "public/index.html" ] || exit 1
+          [ -f "public/style.css" ] || exit 1
+          echo "✔️ Deployment package ready"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITH_TOKEN }}
           publish_dir: ./public
           force_orphan: true
           keep_files: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Verify deployment
+        run: |
+          echo "✅ Deployment completed successfully"
+          echo "🕒 Last update: $(date)"
+          echo "📝 Message preview:"
+          head -n 5 message.txt
