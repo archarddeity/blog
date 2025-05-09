@@ -13,13 +13,13 @@ class NOVABrain:
         self.thought_history = defaultdict(int)
         
     def detect_timezone(self):
-        """Get user timezone from browser or default to NY"""
+        """Get user timezone from system or fallback to UTC"""
         try:
-            # In production, this would come from browser JS
-            return pytz.timezone('America/New_York')  
+            return datetime.now().astimezone().tzinfo
         except:
             return pytz.utc
-
+    
+    
     def emergent_mood(self):
         """Generate mood from environmental factors"""
         now = datetime.now(self.timezone)
