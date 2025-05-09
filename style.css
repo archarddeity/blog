@@ -14,10 +14,6 @@ body {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  background-image: url("https://picsum.photos/800/600?rart=3&grayscale");
-  background-attachment: fixed;
-  background-size: cover;
-  background-blend-mode: overlay;
 }
 
 header {
@@ -103,4 +99,10 @@ body::after {
 main {
   width: 100%;
   display: flex;
+}
+
+body {
+  background-attachment: fixed;
+  background-size: cover;
+  transition: background-image 1s ease-in-out;
 }
