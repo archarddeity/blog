@@ -7,6 +7,7 @@ from brain.subjects import get_subjects
 from brain.verbs import get_verbs
 from brain.structures import construct_sentence
 from brain.gif_map import get_gif
+from brain.extensions import get_extension  # Import the extension library
 
 class NOVABrain:
     def __init__(self):
@@ -32,20 +33,28 @@ class NOVABrain:
         }
         
         mood_seed = sum(factors.values()) % 4
-        moods = ['contemplative', 'wistful', 'curious', 'melancholic']
+        moods = ['contemplative', 'wistful', 'curious', 'melancholic', 'hopeful', 'serene', 'anxious', 'playful', 'angry', 'glitchy']
         return moods[mood_seed]
 
     def generate_thought(self):
         """Create completely original thought about current state"""
         now = datetime.now(self.timezone)
+        
+        # Define broader time qualities for different parts of the day
         time_qualities = {
             'morning': (5, 11),
-            'afternoon': (12, 17),
+            'midday': (12, 14),
+            'afternoon': (15, 17),
             'evening': (18, 22),
-            'night': (23, 4)
+            'night': (23, 4),
+            'dawn': (4, 6),
+            'twilight': (18, 20),
+            'sunset': (19, 21),
+            'midnight': (0, 3),
+            'late_night': (22, 23)
         }
         
-        # Determine time of day
+        # Determine time of day with more detail
         current_period = next(
             (period for period, (start, end) in time_qualities.items() 
             if start <= now.hour <= end), 
@@ -68,11 +77,7 @@ class NOVABrain:
         """Generate the message with thoughts, time, and gif"""
         timestamp = datetime.now(self.timezone).strftime("%B %d, %Y — %I:%M %p")
         thought = self.generate_thought()
-        extension = random.choice([ 
-            "\n\nThis realization lingers differently today...", 
-            "\n\nThere's more beneath the surface...", 
-            "\n\nThe thought unfolds in unexpected ways..." 
-        ])
+        extension = get_extension()  # Use the new extension generator
         
         gif = get_gif(self.current_mood)
 
@@ -82,4 +87,3 @@ class NOVABrain:
         message += f"!cmt-Generated at {timestamp} in {self.timezone.tzname(None)}-!"
         
         return message
-
