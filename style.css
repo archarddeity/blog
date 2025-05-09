@@ -101,7 +101,6 @@ h1 {
 
 footer {
   margin: 40px 0;
-  border-top: 2px dashed var(--border-color);
   padding-top: 20px;
   font-size: 0.9rem;
   text-align: center;
