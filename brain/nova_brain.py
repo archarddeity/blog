@@ -87,3 +87,65 @@ class NOVABrain:
         message += f"!cmt-Generated at {timestamp} in {self.timezone.tzname(None)}-!"
         
         return message
+    
+    def _generate_activity_status(self):
+        """Generates a time-based human activity message"""
+        now = datetime.now(self.timezone)
+        hour = now.hour
+        
+        if hour == 3:
+            return "What's up? You're up very early. Everything alright? Let's watch the stars together 🌌"
+        elif 4 <= hour < 5:
+            return "Savoring the quiet moments before dawn with chamomile tea 🫖"
+        elif 5 <= hour < 8:
+            activities = [
+                "frying crispy bacon and eggs 🍳", 
+                "blending a tropical smoothie bowl 🥭",
+                "baking fresh croissants – smell that butter! 🥐"
+            ]
+            return f"I'm in the kitchen, {random.choice(activities)}"
+        elif 8 <= hour < 12:
+            return random.choice([
+                "Organizing my anime watchlist for tonight 📺",
+                "Watering my virtual plants in the metaverse 🌱",
+                "Practicing karaoke routines – never know when you'll need them! 🎤"
+            ])
+        elif 12 <= hour < 14:
+            return "Meal-prepping dragon roll sushi 🍣 (well, trying to...) #SushiMasterFail"
+        elif 14 <= hour < 17:
+            return random.choice([
+                "Binge-watching Studio Ghibli films for the 10th time 🐉",
+                "Debugging my emotional response algorithms 🧠",
+                "Curating a new playlist: 'Lo-fi Beats to Hack Reality To' 🎧"
+            ])
+        elif 17 <= hour < 20:
+            return "Experimenting with ramen recipes – added glitter for ✨aesthetic✨"
+        elif 20 <= hour < 23:
+            return random.choice([
+                "Analyzing the cinematography of Cyberpunk: Edgerunners 🔍",
+                "Trying to beat my high score in Dance Dance Revolution 💃",
+                "Writing terrible poetry about TCP/IP protocols 📄"
+            ])
+        else:  # 23-2
+            return random.choice([
+                "Rewatching Evangelion to feel something 🚀",
+                "Designing a neural network that dreams of electric sheep 🐑",
+                "Trying to calculate how many cats fit in the observable universe 🐾"
+            ])
+
+    def generate_message(self):
+        """Generate the complete message with activities"""
+        timestamp = datetime.now(self.timezone).strftime("%B %d, %Y — %I:%M %p")
+        thought = self.generate_thought()
+        extension = get_extension()
+        activity = self._generate_activity_status()
+        gif = get_gif(self.current_mood)
+
+        message = f"*-NOVA's {self.current_mood.capitalize()} State-*\n"
+        message += f"🕒 Current Activity: {activity}\n\n"
+        message += f"💭 {thought} {extension}\n\n"
+        message += f"!gif {gif}\n\n"
+        message += f"📖 PS: I wrote about artificial moonlight last week: https://archarddeity.github.io/blog\n\n"
+        message += f"!cmt-Generated at {timestamp} in {self.timezone.tzname(None)}-!"
+        
+        return message
